@@ -1,17 +1,18 @@
 ---
 name: standard-create-readme
 description: >-
-  Writes or restructures project README.md using the team heading, emoji title,
+  Writes or restructures an in-repo README using the team heading, emoji title,
   and section layout. Use when creating a new README, 按规范写 README, or the
   user asks to format a project readme. Keep existing style unless they ask
-  for the standard.
+  for the standard. A git clone / GitHub / GitLab project front uses
+  standard-create-readme-git instead. 要做 git 时不用本技能。
 ---
 
 # README 编写规范
 
 适用于**新建或改写项目 README**（如 `README.md`）时的结构与格式规范，目标是简洁易读。
 
-> 仅对**新建 README** 或用户**明确要求按规范写**时应用；修改已有 README 时保留原有风格，只在不冲突处做增强。
+> 仅对**新建 README** 或用户**明确要求按规范写**时应用；修改已有 README 时保留原有风格，只在不冲突处做增强。要做 git、给克隆用户看的项目首页，改用 `standard-create-readme-git`，不要套本技能。
 
 ---
 

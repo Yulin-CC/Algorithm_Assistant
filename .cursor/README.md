@@ -56,11 +56,11 @@
 | `agent-smart_image` | 图像理解、掩膜/框三档质量判断、漏检补标和 adjust 调整。叶子 `0-General/0-SmartImage`。不改原标注。 |
 | `tool-build_env` | 给任意叶配 Python：uv 建 venv → 按需 CUDA/torch → 再装 `PKGS`。conda / 裸 pip 仅备选。 |
 | `tool-remote` | 本机 Windows ↔ 远端 Ubuntu。主机以 `workenv/link.md` 已确认行为准。SSH、上传核对。 |
-| `standard-*` | README / 脚本 / skill 写法、数据集合并等规范。 |
+| `standard-*` | README / 脚本 / skill 写法、数据集合并等规范。给 git 克隆看的项目首页只用 `standard-create_readme_git`，平时 README 仍用 `standard-create_readme`。 |
 
 图像理解、掩膜/框质量判断、漏检补标和 adjust 调整走 `agent-smart_image` → `tools/0-General/0-SmartImage`（不走 DataEngine）。不改原标注。
 
-工程师（`.cursor/agents/`；数据、模型、测试、运维含单模块都由组长派）：`data-engineer` 数据处理；`train-engineer` 模型（训练、验证、推理；派工写明时做源码适配）；`test-engineer` 测试，含误检漏检分析；`ops-engineer` 项目整理、装环境（`tool-build_env`）、未归类杂活，以及盯当前这轮有没有卡住。组长之间按项目等活，用 `agents/TeamLeader/room.py`，不另建组长工程师。运维不进房间，心跳只用派工里的组长 AgentID。
+工程师（`.cursor/agents/`；数据、模型、测试、运维含单模块都由组长派）：`data-engineer` 数据处理；`train-engineer` 模型（训练、验证、推理；派工写明时做源码适配）；`test-engineer` 测试，含误检漏检分析；`ops-engineer` 项目整理、装环境（`tool-build_env`）、未归类杂活，以及盯这轮工作有没有卡点。`listen` 的 `READY` 不算活已经在往前走。组长之间按项目等活，用 `agents/TeamLeader/room.py`，不另建组长工程师。运维不进房间，心跳只用派工里的组长 AgentID。
 
 ---
 
