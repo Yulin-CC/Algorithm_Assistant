@@ -1,22 +1,61 @@
-# 算法助手产线
+# 算法助手
 
-一个组长加四名工程师。组长负责拆意图、派工、协调和汇总答复；数据、模型、测试、运维交给对应工程师。不同项目的组长在房间里按项目等活。人说话后由 `skills/` 路由，`tools/` 叶子执行，`customer/` 只记本单路径和进度。不绑某一台机器。Windows 不起 vLLM 和 SAM。技能盘点更新于 2026-11-17，客户票盘点仍截至 2026-11-11。编制与组长房间更新于 2026-11-17。
+标注和数据产线的 Cursor 工作区。你说话，组长派工，`skills/` 路由，`tools/` 执行。不绑某一台机器。Windows 不起 vLLM 和 SAM。
 
-- **19** 个 `skills/` 技能
+克隆后用 Cursor 打开本目录，对新对话说「请进行项目初始化」。地图可以是空的，路径由你当场给。
+
+- **19** 个技能：调度 6、规范 8、工具 5
 - **5** 个数据引擎已接线
-- **16** 张客户票：6 还要往下做，3 等填路径，7 结果已落盘
+- 本快照不含已有客户票。初始化之后在 `.cursor/customer/` 开票
+
+- [怎么开始](#0-怎么开始)
+- [仓库里有什么](#1-仓库里有什么)
+- [团队架构](#2-团队架构)
+- [一条请求怎么走](#3-一条请求怎么走)
+- [组长房间](#4-组长房间)
+- [四名工程师](#5-四名工程师)
+- [技能分三层](#6-技能分三层)
+- [数据引擎接线](#7-数据引擎接线)
+- [识图四段](#8-识图四段)
+- [客户票](#9-客户票)
 
 ---
 
-## 0 新环境
+## 0 怎么开始
 
-新环境先说「请进行项目初始化」。助手按 `workenv/require.md` 问清数据根、项目根、文档路径和主机。客户票里的路径是各单自己的，不要在接入时猜。没确认的项停下来问，不要沿用别的机器上的地址。
+1. 克隆本仓库，用 Cursor **打开这个目录**。技能在 `.cursor/skills/`，不要链到用户家目录，否则 `REPO` 会指错。
+2. 新开一条 Agent 对话，说「请进行项目初始化」。其它对话不跑初始化。
+3. 助手按 `workenv/require.md` 问数据根、项目根、文档路径，以及要不要连服务器。地图是空表时直接问这几项。已经写下具体路径时，只把那些路径念出来请你改口。确认前不扫盘，不沿用别的机器。
+4. 要连服务器时先做密钥探测（`BatchMode`，不输密码）。`link.md` 确认列还是待确认的主机，不能当成已经点头。探测通过后再确认那台机器上的目录。
+5. 看 `workenv/README.md` 并点头。点头之前，确认列不能改成已确认。点头之后，才把 `link.md` 里的 URL 写回 `.cursor/model/config/vllm_server.json` 和 `sam.json`。
+6. 服务是否在跑，在 `.cursor` 下执行 `py -3 model/util/probe.py`。Windows 不起 vLLM / SAM。没起来的记在 `workenv/API-server.md`，想搭的时候再说。
 
-给人改的地图在 `workenv/`，连接说明是 `workenv/link.md`。调用地址在 `.cursor/model/config/vllm_server.json` 和 `sam.json`。改了地图里的 URL，先写回这两个 json，再在 `.cursor` 下跑 `python model/util/probe.py`。
+客户票里的路径是各单自己的。没确认的项停下来问。
 
 ---
 
-## 1 团队架构
+## 1 仓库里有什么
+
+```
+./
+├── README.md                         # 本文件
+├── workenv/                          # 工作地图。克隆下来是待确认
+│   ├── require.md                    # 初始化脚本
+│   ├── link.md                       # 主机、目录、启动脚本、URL
+│   ├── API-server.md                 # 探活和自搭建说明
+│   └── env-local/                    # 本机数据根、项目根、文档
+└── .cursor/
+    ├── rules/                        # 常驻规则
+    ├── skills/                       # 何时唤起、怎么确认
+    ├── agents/                       # 四名工程师；TeamLeader 是组长房间
+    ├── tools/                        # 叶子脚本
+    ├── model/                        # vLLM / SAM 客户端和地址
+    └── customer/                     # 客户票。本快照不含，开票后才有
+```
+
+---
+
+## 2 团队架构
 
 每条 Agent 对话都是组长，不另建 lead。四名工程师在 `.cursor/agents/`，点名可以直接进。项目整理、装环境和盯卡住派运维。
 
@@ -43,7 +82,7 @@ flowchart TD
 
 ---
 
-## 2 一条请求怎么走
+## 3 一条请求怎么走
 
 数据、模型、测试、运维都派对应工程师，单模块也派。没有算法仓的纯数据活跳过 `0-Agent-demo`，`data_root` 仍须用户给。服务器协同先看 `workenv/link.md`。git 推远程要你开口才做。目标已经确认后，障碍由组长派工消化；卡住、心跳超时和资源被占派运维先查组长房间。对用户先单独一句结论，再按轻重分块分点，最后收一句已经想好的下一步。口吻像跟同事说。坏图坏标签移到缓存目录，不直接删。
 
@@ -77,7 +116,7 @@ flowchart TD
 
 ---
 
-## 3 组长房间
+## 4 组长房间
 
 不同项目的组长互相等活，也互相留言。留言写在房间文件里。对方那条对话要已经挂着 `listen`，才会被叫醒去读。没挂上，留言就躺着，直到那边自己来读。
 
@@ -108,7 +147,7 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 
 ---
 
-## 4 四名工程师
+## 5 四名工程师
 
 数据、模型、测试、运维含单模块都由组长派。点名 `/data-engineer`、`/train-engineer`、`/test-engineer`、`/ops-engineer` 直接进该工程师。子代理看不到主对话，交接靠文件。
 
@@ -123,7 +162,7 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 
 ---
 
-## 5 技能分三层
+## 6 技能分三层
 
 | 层 | 数量 | 入口 |
 | --- | --- | --- |
@@ -135,7 +174,7 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 
 ---
 
-## 6 数据引擎接线
+## 7 数据引擎接线
 
 以 `skills/agent-data_engine` 的调度表为准。未接线的行停住，不用别的叶子顶替。GroundingPI 出框后默认再走 SmartImage 叠图校验。定档之后的漏检、补标和调整都在 SmartImage。
 
@@ -152,7 +191,7 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 
 ---
 
-## 7 识图四段已经接上
+## 8 识图四段已经接上
 
 定档、漏检、补标、调整都在 `0-SmartImage`。检测分割和变化检测共用这些脚本，取点和定位不一样。误检漏检汇总归测试工程师。默认只写 `draft/`，用户说落盘才进 `jsons/`。来源：`agent-smart_image` 与 `0-SmartImage` README，2026-11-11。
 
@@ -191,25 +230,6 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 
 ---
 
-## 8 客户票
+## 9 客户票
 
-归类来自各票 `todo.md` 的 phase 和 current，不是工单系统里的正式状态。「结果已落盘」仍可能等人勾 deliver，或指标还没算。
-
-| 票 | 事项 | phase | 归类 | 当前 |
-| --- | --- | --- | --- | --- |
-| `image-260912-qwen-smartcity` | 智慧城市 Qwen 检测 | run | 还要往下做 | C08–C09 已补；从 C06-6 续跑 |
-| `image-260922-qwen-testset` | 测试集航线检测 | check | 还要往下做 | 交通跳过；农业 / 执法等人看 |
-| `image-260924-agri-box2seg` | 农业框转多边形 | check | 还要往下做 | 9 格全量完成，等人审 jsons-seg-pre |
-| `image-260926-roadcrack-fengqing` | 凤庆道路裂缝 | sample | 还要往下做 | box 门控 sample 完成，全量前再定 gate |
-| `image-261013-tinroof-pyramid` | 铁皮屋顶金字塔 | round-2 | 还要往下做 | 官方 yolo26s 重训 round-2 |
-| `image-260911-classify-field` | 田间农田分类 | run | 还要往下做 | 试跑完成；农田 7423 / 非农田 5895，未去掉 limit |
-| `image-260902-changedetect` | 变化检测识图 | confirm | 等填路径 | 已迁入，待填 data_root |
-| `image-260811-pyramidlabel` | 漂浮物金字塔 | confirm | 等填路径 | 种子预标已完成；本机路径待填 |
-| `image-260827-class-complement` | 基类互补模板 | confirm | 等填路径 | 待填 data_root / GoldSet / 矩阵 |
-| `image-261106-det-vehicle-groundingpi` | GroundingPI 车辆 | deliver | 结果已落盘 | GEOAI 车辆与船只分割已落盘 |
-| `image-261026-smarttraffic-yoloe` | 智慧交通 YOLOE | deliver | 结果已落盘 | jsons-pre car\|truck 已覆盖；正式 jsons 与 bus 未改 |
-| `image-261021-smarttraffic-prelabel` | 智慧交通预标 | deliver | 结果已落盘 | car / bus / truck 覆盖 SAM3；正式 jsons 未改 |
-| `image-261020-smartcity-complement` | 智慧城市补类 | done | 结果已落盘 | Trainvalset 正式 jsons 追加 984640 框 |
-| `image-261010-tocleanset-pyramid` | FieldShed 金字塔 | deliver | 结果已落盘 | 779 对 images + jsons 已合并 |
-| `image-260927-classify-firelane-crops` | crop 门控 | partial | 结果已落盘 | 漂浮物两版已跑完；消防可按同布局重跑 |
-| `image-260927-rm-customer` | 客户截图与预测 | deliver | 结果已落盘 | json 已落盘；精确率召回未算 |
+本快照不含已有票。初始化完成之后，要开新票就说「客户任务」，助手按 `agent-customer_task` 在 `.cursor/customer/<kind>-<yymmdd>-<slug>/` 建 `.skill`、`require/`、`util/` 和 `todo.md`。进度只写该票 `todo.md`。票里的路径必须人给，不要猜。
