@@ -1,0 +1,6 @@
+_tmp/
+**/__pycache__/
+*.pyc
+.cursor/agents/TeamLeader/room.md
+.cursor/agents/TeamLeader/online.json
+.cursor/customer/

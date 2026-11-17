@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "py -3 .cursor/agents/hooks/team_room.py"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "py -3 .cursor/agents/hooks/team_room.py"
+      }
+    ]
+  }
+}

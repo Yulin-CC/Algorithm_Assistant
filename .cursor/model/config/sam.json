@@ -1,0 +1,9 @@
+{
+  "name": "Triton SAM ViT-H",
+  "url": "",
+  "protocol": "grpc",
+  "encoder": "sam_vit_h_encoder",
+  "decoder": "sam_vit_h_decoder",
+  "input_size": [684, 1024],
+  "default": true
+}

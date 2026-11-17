@@ -1,0 +1,335 @@
+"""
+# @Author: Yullin
+# @Date: 2026-11-10
+# @Description: 变化检测两期图左右拼接，以及二值掩膜连通域。左前右后。
+"""
+
+from __future__ import annotations
+
+import os
+import tempfile
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
+MIN_AREA = 32
+STITCH_GAP = 8
+# 连通域裁窗：旧默认 2.5。再扩两圈（每圈半个框边 = 0.5）→ 3.5。发给 Qwen 的 overlay/model 用这个。
+CROP_SCALE = 3.5
+COVER_GRAY = (144, 144, 144)
+_PROMPT_EMPTY = (
+    "变化检测要先确认定位什么。把用户确认过的提示词传给 --prompt 或 --prompt-file。"
+    "建筑变化、土地变化不要写死在脚本里。"
+)
+
+CD_DESCRIBE = (
+    "左图是前时相，右图是后时相，两期已经对齐。"
+    "用简洁中文说明看得见的变化：什么消失、什么新出现、什么明显改了。"
+    "没有明显变化就直接说没有。2–6 句。不要编造看不清的细节。"
+)
+
+CD_MASK = (
+    "左图是前时相，右图是后时相，已经对齐。"
+    "两边同一位置的彩色轮廓圈出变化掩膜，内部只有很淡的着色，不是框。"
+    "按轮廓定位。轮廓里的纹理和颜色以原图为准，不要被淡色带偏。"
+    "图上不要写字，没有 T1、T2 或编号；不要把叠色或轮廓当成文字标记。"
+    "小连通域也要按地物判断，不要因为面积小就当噪声。"
+    "判断这块在两期之间是不是真实变化，以及掩膜是否罩住变化范围。"
+    "分两步。看不出变化（配准误差、季节、阴影、两期本来一样）：present=false，grade=wrong。"
+    "能看出真实变化：present=true，不得给 wrong。"
+    "是变化，掩膜内没变化的区域比变化本身还大：grade=adjust，issue=oversize。"
+    "是变化，但有一大块真变化在掩膜外：grade=adjust，issue=incomplete。"
+    "是变化，但掩膜明显错位：grade=adjust，issue=shifted。"
+    "掩膜只比变化范围松或紧一圈：grade=fit，issue 为空。"
+    "已经罩住变化不算贴合。过大、不完整、错位都不得打成 wrong。"
+    '只返回 JSON：{"present":true,"grade":"fit","issue":"","reason":"..."}'
+    ' 或 {"present":true,"grade":"adjust","issue":"oversize","reason":"..."}'
+    ' 或 {"present":true,"grade":"adjust","issue":"incomplete","reason":"..."}'
+    ' 或 {"present":true,"grade":"adjust","issue":"shifted","reason":"..."}'
+    ' 或 {"present":false,"grade":"wrong","issue":"","reason":"..."}。'
+)
+
+
+def cd_grade_prompt(task: str = "") -> str:
+    """定档提示。空则用 CD_MASK；有本单句子则只判该类变化。"""
+    task = str(task or "").strip()
+    if not task:
+        return CD_MASK
+    return (
+        "左图是前时相，右图是后时相，已经对齐。"
+        "两边同一位置的彩色轮廓圈出变化掩膜，内部只有很淡的着色，不是框。"
+        "按轮廓定位。轮廓里的纹理和颜色以原图为准，不要被淡色带偏。"
+        "图上不要写字，没有 T1、T2 或编号；不要把叠色或轮廓当成文字标记。"
+        "小连通域也要按地物判断，不要因为面积小就当噪声。"
+        f"本单只判断这类变化：{task}。"
+        "分两步。看不出本单定义的土地变化"
+        "（配准误差、季节长势、阴影、两期地类本来一样、"
+        "只是作物颜色或建筑外观变了但地类未变）：present=false，grade=wrong。"
+        "能看出本单定义的土地变化：present=true，不得给 wrong。"
+        "是土地变化，掩膜内没变化的区域比变化本身还大：grade=adjust，issue=oversize。"
+        "是土地变化，但有一大块真变化在掩膜外：grade=adjust，issue=incomplete。"
+        "是土地变化，但掩膜明显错位：grade=adjust，issue=shifted。"
+        "掩膜只比变化范围松或紧一圈：grade=fit，issue 为空。"
+        "已经罩住变化不算贴合。过大、不完整、错位都不得打成 wrong。"
+        '只返回 JSON：{"present":true,"grade":"fit","issue":"","reason":"..."}'
+        ' 或 {"present":true,"grade":"adjust","issue":"oversize","reason":"..."}'
+        ' 或 {"present":true,"grade":"adjust","issue":"incomplete","reason":"..."}'
+        ' 或 {"present":true,"grade":"adjust","issue":"shifted","reason":"..."}'
+        ' 或 {"present":false,"grade":"wrong","issue":"","reason":"..."}。'
+    )
+
+
+def read_bgr(path: str):
+    data = np.fromfile(path, dtype=np.uint8)
+    img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    if img is None:
+        raise FileNotFoundError(f"无法读图: {path}")
+    return img
+
+
+def locate_pair_file(path, dataset_root="") -> str:
+    """原路径没有时，到数据集 A/B 以及上级 dsample/sample 里找同名（含挖掘前缀）。"""
+    raw = str(path or "").strip()
+    if raw and os.path.isfile(raw):
+        return raw
+    name = os.path.basename(raw)
+    if not name:
+        return ""
+    side = Path(raw).parent.name if raw else ""
+    if side.lower() not in {"a", "b"}:
+        side = "A"
+    roots = []
+    if dataset_root:
+        cur = Path(dataset_root)
+        for _ in range(5):
+            roots.append(cur)
+            if cur.parent == cur:
+                break
+            cur = cur.parent
+    for root in roots:
+        direct = root / side / name
+        if direct.is_file():
+            return str(direct)
+        for bucket in ("dsample", "sample"):
+            folder = root / bucket / side
+            if not folder.is_dir():
+                continue
+            exact = folder / name
+            if exact.is_file():
+                return str(exact)
+            hits = list(folder.glob(f"*{name}"))
+            if len(hits) == 1:
+                return str(hits[0])
+    return ""
+
+
+def read_mask(path: str):
+    data = np.fromfile(path, dtype=np.uint8)
+    mask = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
+    if mask is None:
+        raise FileNotFoundError(f"无法读掩膜: {path}")
+    return mask
+
+
+def child_dir(root: str, names) -> str:
+    for name in names:
+        path = os.path.join(root, name)
+        if os.path.isdir(path):
+            return path
+    return ""
+
+
+def pair_roots(dataset_root: str):
+    before = child_dir(dataset_root, ("A", "a", "t1"))
+    after = child_dir(dataset_root, ("B", "b", "t2"))
+    if before and after:
+        return before, after
+    return "", ""
+
+
+def list_pairs(before_dir: str, after_dir: str):
+    after = {}
+    for path in Path(after_dir).iterdir():
+        if path.is_file() and path.suffix.lower() in IMG_EXTS:
+            after[path.stem] = str(path)
+    pairs = []
+    for path in sorted(Path(before_dir).iterdir()):
+        if path.is_file() and path.suffix.lower() in IMG_EXTS and path.stem in after:
+            pairs.append((path.stem, str(path), after[path.stem]))
+    return pairs
+
+
+def stitch(left, right):
+    if left.shape[0] != right.shape[0]:
+        scale = left.shape[0] / float(right.shape[0])
+        right = cv2.resize(
+            right,
+            (max(1, int(round(right.shape[1] * scale))), left.shape[0]),
+            interpolation=cv2.INTER_AREA,
+        )
+    gap = np.full((left.shape[0], STITCH_GAP, 3), 255, np.uint8)
+    return np.concatenate([left, gap, right], axis=1)
+
+
+def write_view(bgr, path, max_side=1280, quality=85) -> str:
+    h, w = bgr.shape[:2]
+    if max(h, w) > max_side:
+        scale = max_side / float(max(h, w))
+        bgr = cv2.resize(
+            bgr,
+            (max(1, int(round(w * scale))), max(1, int(round(h * scale)))),
+            interpolation=cv2.INTER_AREA,
+        )
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    ok, buf = cv2.imencode(".jpg", bgr, [int(cv2.IMWRITE_JPEG_QUALITY), int(quality)])
+    if not ok:
+        raise RuntimeError("无法写视图")
+    buf.tofile(path)
+    return path
+
+
+def save_view(bgr, max_side=1280) -> str:
+    fd, path = tempfile.mkstemp(suffix=".jpg")
+    os.close(fd)
+    return write_view(bgr, path, max_side=max_side)
+
+
+def mask_components(mask, min_area=MIN_AREA):
+    binary = (mask > 0).astype(np.uint8)
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+    found = []
+    for idx in range(1, count):
+        area = int(stats[idx, cv2.CC_STAT_AREA])
+        if area < int(min_area):
+            continue
+        x = int(stats[idx, cv2.CC_STAT_LEFT])
+        y = int(stats[idx, cv2.CC_STAT_TOP])
+        w = int(stats[idx, cv2.CC_STAT_WIDTH])
+        h = int(stats[idx, cv2.CC_STAT_HEIGHT])
+        found.append({
+            "xyxy": [x, y, x + w, y + h],
+            "area": area,
+            "mask": labels == idx,
+        })
+    return found
+
+
+def crop_window(shape, xyxy, scale=CROP_SCALE):
+    h, w = shape[:2]
+    x0, y0, x1, y1 = [float(v) for v in xyxy]
+    bw = max(1.0, x1 - x0)
+    bh = max(1.0, y1 - y0)
+    cx = (x0 + x1) / 2.0
+    cy = (y0 + y1) / 2.0
+    nx0 = max(0, int(round(cx - bw * scale / 2.0)))
+    ny0 = max(0, int(round(cy - bh * scale / 2.0)))
+    nx1 = min(w, int(round(cx + bw * scale / 2.0)))
+    ny1 = min(h, int(round(cy + bh * scale / 2.0)))
+    if nx1 <= nx0 or ny1 <= ny0:
+        raise ValueError("crop 为空")
+    return nx0, ny0, nx1, ny1
+
+
+def paint_mask(bgr, mask_crop, color, alpha=0.15):
+    vis = bgr.copy()
+    region = mask_crop.astype(bool)
+    if not region.any():
+        return vis
+    layer = vis.copy()
+    layer[region] = color
+    blended = cv2.addWeighted(layer, float(alpha), vis, 1.0 - float(alpha), 0)
+    vis[:] = blended
+    contours, _ = cv2.findContours(region.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(vis, contours, -1, (20, 20, 20), 4, lineType=cv2.LINE_AA)
+    cv2.drawContours(vis, contours, -1, color, 2, lineType=cv2.LINE_AA)
+    return vis
+
+
+def pair_mask_view(before_bgr, after_bgr, comp, color):
+    nx0, ny0, nx1, ny1 = crop_window(before_bgr.shape, comp["xyxy"])
+    left = paint_mask(before_bgr[ny0:ny1, nx0:nx1], comp["mask"][ny0:ny1, nx0:nx1], color)
+    right = paint_mask(after_bgr[ny0:ny1, nx0:nx1], comp["mask"][ny0:ny1, nx0:nx1], color)
+    return stitch(left, right)
+
+
+def require_task(prompt="", prompt_file="") -> str:
+    """用户确认过的定位句子。空则停，不替用户选建筑或土地。"""
+    text = ""
+    path = str(prompt_file or "").strip()
+    if path:
+        if not os.path.isfile(path):
+            raise SystemExit(f"找不到提示词文件: {path}")
+        with open(path, encoding="utf-8") as f:
+            text = f.read().strip()
+    if not text:
+        text = str(prompt or "").strip()
+    if not text:
+        raise SystemExit(_PROMPT_EMPTY)
+    return text
+
+
+def cd_locate_prompt(task: str, kind: str = "miss") -> str:
+    """固定规矩包住用户句子。kind=miss 报漏检，kind=adjust 只改当前这一块。"""
+    task = str(task or "").strip()
+    if not task:
+        raise SystemExit(_PROMPT_EMPTY)
+    if kind == "adjust":
+        focus = (
+            "彩色轮廓是当前要改的这一块变化，内部淡色不是真实地物。"
+            "只给一个点，点在这块真实变化的中心。"
+            "没有符合本单的变化就返回 {\"miss\":[]}。"
+        )
+    else:
+        focus = (
+            "只报完全没被灰色罩住、且符合本单的变化。每个变化一个点。"
+            "已经罩住一部分的不要报。"
+            "没有漏检就返回 {\"miss\":[]}。"
+        )
+    return (
+        "左图是前时相 T1，右图是后时相 T2，两期已经对齐。"
+        f"本单只定位这类变化：{task}。"
+        "灰色区域是已经标出的变化。不要在灰色上落点。灰色不是目标的颜色。"
+        f"{focus}"
+        "cx、cy 是相对这张拼图宽和高的 0 到 1，不要给框。"
+        "label 写 change。reason 只写看到的事实。"
+        '只返回 JSON：{"miss":[{"label":"change","cx":0.7,"cy":0.4,"reason":"..."}]}。'
+    )
+
+
+def paint_gray(bgr, mask, color=COVER_GRAY):
+    vis = bgr.copy()
+    region = np.asarray(mask) > 0
+    if region.shape[:2] != vis.shape[:2]:
+        raise ValueError("掩膜尺寸与图像不一致")
+    vis[region] = color
+    return vis
+
+
+def point_is_gray(bgr, px, py, color=COVER_GRAY) -> bool:
+    h, w = bgr.shape[:2]
+    if h <= 0 or w <= 0:
+        return True
+    x = min(max(int(round(float(px))), 0), w - 1)
+    y = min(max(int(round(float(py))), 0), h - 1)
+    return bool(np.all(bgr[y, x] == np.array(color, dtype=bgr.dtype)))
+
+
+def map_stitch_point(cx, cy, left_w, right_w, height, gap=STITCH_GAP):
+    """拼图上的 0–1 坐标。左图为 t1，右图为 t2，白缝返回 None。px、py 是该时相里的像素。"""
+    left_w = int(left_w)
+    right_w = int(right_w)
+    height = float(height)
+    total_w = left_w + int(gap) + right_w
+    if total_w <= 0 or height <= 0:
+        return None
+    px = float(cx) * total_w
+    py = float(cy) * height
+    if py < 0 or py > height:
+        return None
+    if px < left_w:
+        return "t1", px, min(py, height - 1e-6)
+    if px >= left_w + int(gap):
+        return "t2", px - left_w - int(gap), min(py, height - 1e-6)
+    return None
