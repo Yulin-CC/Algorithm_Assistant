@@ -145,12 +145,12 @@ flowchart TD
 
 - 接到活才登记。纯问答不进房间。AgentID 用开场注入的那一个，没注入就先不登记。
 - 只有本次等待开始之后的 `done` 才开工。关掉对话、心跳超过 45 分钟、或退出时没有 `done`，等待方不开工并告诉用户。
-- 对方还没进房间也可以等。单次 `listen` 约 2 小时。安静结束就再挂一次。已经报过的那次退出不会再次挡下这次等待。
-- 自己干完先 `done` 再 `leave`。活没干完只 `leave`。同一服务器、GPU 或数据根已有人在干活，先在房间里说一声。长活期间由运维挂 `listen`，用这条对话的 AgentID。
+- 对方还没进房间也可以等。单次 `listen` 约 2 小时。安静结束就再挂一次。长盯用 `watch`：安静打 `CHECK` 不退。已经报过的那次退出不会再次挡下这次等待。
+- 自己干完先 `done` 再 `leave`。活没干完只 `leave`。同一服务器、GPU 或数据根已有人在干活，先在房间里说一声。长活期间这条对话自己挂 `watch`，运维另盯进程。运维子代理掉线立刻再派，不要等用户问。
 
 ```bash
 py -3 .cursor/agents/TeamLeader/room.py join --id <AgentID> --project YOLOE --status waiting --wait-for SAMCD --task "开训"
-py -3 .cursor/agents/TeamLeader/room.py listen --id <AgentID>
+py -3 .cursor/agents/TeamLeader/room.py watch --id <AgentID>
 py -3 .cursor/agents/TeamLeader/room.py done --id <AgentID> --project SAMCD
 py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 ```
@@ -163,7 +163,7 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 
 ## 👷 5 四名工程师
 
-数据、模型、测试、运维含单模块都由组长派。点名 `/data-engineer`、`/train-engineer`、`/test-engineer`、`/ops-engineer` 直接进该工程师。子代理看不到主对话，交接靠文件。
+数据、模型、测试、运维含单模块都由组长派。点名 `/data-engineer`、`/train-engineer`、`/test-engineer`、`/ops-engineer` 直接进该工程师。子代理看不到主对话，交接靠文件。四名工程师默认用 Cursor Grok 4.6 medium，派工时不要另指定模型。
 
 | 工程师 | 点名 | 负责 | 交回组长 |
 | --- | --- | --- | --- |
@@ -172,7 +172,7 @@ py -3 .cursor/agents/TeamLeader/room.py leave --id <AgentID>
 | 🧪 测试 | `/test-engineer` | 测指定版本，写 testlog。误检漏检分析汇总定档 `wrong` 和已有漏检，写入 `draft/analysis/` | 报告路径、指标、误漏检清单、补数还是改配 |
 | 🛠️ 运维 | `/ops-engineer` | 项目整理、装环境、杂活。盯这轮有没有卡点：进程没了、心跳超时没有 done、资源被占、服务口开了但业务没接上 | 卡在哪一侧、已齐或已构建、建议的下一棒。没卡写「这轮没卡」并带 PID 或日志末行 |
 
-数据处理工程师不开正训，也不自己装环境。质检打在 `draft/`，正式 `jsons/`、`labels/` 留到整理再写；预标里去掉 `wrong` 发生在写 `jsons-det-pre` / `jsons-seg-pre` 时。模型工程师按派工里的「已齐 / 已构建」进槽，确认 `Customer.md` 再开跑，不把未人审预标当 GT，也不自己出测试报告。源码适配不进三槽，只切派工点名的那一个功能。测试工程师要事先拿到权重版本和数据集，缺了就停；不改正式 GT，也不自己开新训。建议下一棒是补数还是改配。运维不进房间。长活期间挂 `listen`，只用派工里的组长 AgentID。`listen` 只听房间，醒来后还要看派工点名的进程、端口和日志，只说「还在跑」不算盯完。起了服务但业务没有 PID 或日志没有就绪字，算卡点。组长不自己起 vLLM。缺环境由组长派运维装好再派回。
+数据处理工程师不开正训，也不自己装环境。质检打在 `draft/`，正式 `jsons/`、`labels/` 留到整理再写；预标里去掉 `wrong` 发生在写 `jsons-det-pre` / `jsons-seg-pre` 时。模型工程师按派工里的「已齐 / 已构建」进槽，确认 `Customer.md` 再开跑，不把未人审预标当 GT，也不自己出测试报告。源码适配不进三槽，只切派工点名的那一个功能。测试工程师要事先拿到权重版本和数据集，缺了就停；不改正式 GT，也不自己开新训。建议下一棒是补数还是改配。运维不进房间。长活期间这条对话自己挂 `watch`，运维另盯进程，只用派工里的组长 AgentID。`watch` / `listen` 只听房间，醒来后还要看派工点名的进程、端口和日志，只说「还在跑」不算盯完。运维子代理掉线立刻再派。起了服务但业务没有 PID 或日志没有就绪字，算卡点。组长不自己起 vLLM。缺环境由组长派运维装好再派回。
 
 ---
 

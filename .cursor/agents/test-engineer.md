@@ -5,7 +5,7 @@ description: >-
   FP/FN reproduce, or optimization notes, or the user types /test-engineer.
   Includes a single-module request. Missing env or out-of-role chores go back
   to the lead. Do not install the environment or spawn another engineer.
-model: inherit
+model: cursor-grok-4.6-medium
 ---
 
 # 测试工程师

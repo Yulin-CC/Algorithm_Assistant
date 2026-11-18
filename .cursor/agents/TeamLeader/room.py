@@ -3,6 +3,7 @@
 # @Date: 2026-11-17
 # @Description: 组长房间。按项目登记在岗、留言、标记干完，并边续心跳边听写给自己的留言
 # @Command: py -3 .cursor/agents/TeamLeader/room.py listen --id <AgentID>
+# @Command: py -3 .cursor/agents/TeamLeader/room.py watch --id <AgentID>
 """
 
 import argparse
@@ -23,6 +24,7 @@ LOCK = os.path.join(ROOT, ".room.lock")
 STALE = timedelta(minutes=45)
 KEEP = 200
 WAIT_MAX = 2 * 60 * 60
+WATCH_MAX = 12 * 60 * 60
 POLL = 20
 BEAT_EVERY = 20 * 60
 
@@ -397,8 +399,7 @@ def addressed_to(event, agent_id):
     return text == token or text.startswith(token + " ")
 
 
-def cmd_listen(args):
-    timeout = args.timeout if args.timeout is not None else WAIT_MAX
+def listen_until(args, timeout, quiet="TIMEOUT"):
     interval = args.interval if args.interval is not None else POLL
     beat_every = args.beat if args.beat is not None else BEAT_EVERY
     if beat_every <= 0 or beat_every >= int(STALE.total_seconds()):
@@ -447,9 +448,34 @@ def cmd_listen(args):
             print(f"READY project={wait_for} at {stamp}", flush=True)
             return 0
         if time.time() >= deadline:
-            print("TIMEOUT listen still quiet", flush=True)
+            print(f"{quiet} listen still quiet", flush=True)
             return 3
         time.sleep(interval)
+
+
+def cmd_listen(args):
+    timeout = args.timeout if args.timeout is not None else WAIT_MAX
+    return listen_until(args, timeout, quiet="TIMEOUT")
+
+
+def cmd_watch(args):
+    cycle = args.timeout if args.timeout is not None else WAIT_MAX
+    total = args.max if args.max is not None else WATCH_MAX
+    if cycle <= 0 or total <= 0:
+        print("NEED positive timeout and max")
+        return 1
+    end = time.time() + total
+    while True:
+        left = end - time.time()
+        if left <= 0:
+            print("TIMEOUT watch still quiet", flush=True)
+            return 3
+        code = listen_until(args, max(1, int(min(cycle, left))), quiet="CHECK")
+        if code != 3:
+            return code
+        if time.time() >= end:
+            print("TIMEOUT watch still quiet", flush=True)
+            return 3
 
 
 #-------------#
@@ -500,6 +526,14 @@ def build_parser():
     listen.add_argument("--interval", type=int)
     listen.add_argument("--beat", type=int)
     listen.set_defaults(func=cmd_listen)
+
+    watch = sub.add_parser("watch")
+    watch.add_argument("--id", required=True)
+    watch.add_argument("--timeout", type=int)
+    watch.add_argument("--max", type=int)
+    watch.add_argument("--interval", type=int)
+    watch.add_argument("--beat", type=int)
+    watch.set_defaults(func=cmd_watch)
 
     leave = sub.add_parser("leave")
     leave.add_argument("--id", required=True)
