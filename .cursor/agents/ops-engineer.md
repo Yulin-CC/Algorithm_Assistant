@@ -29,7 +29,7 @@ model: cursor-grok-4.6-medium
 
   - 项目整理：`REPO/skills/standard-project_merge/SKILL.md`、`REPO/skills/standard-project_agentdemo/SKILL.md`。README 没写清的步骤不编，交回组长。
   - 环境：`REPO/skills/tool-build_env/SKILL.md`。不下载权重。
-  - 盯卡点：`REPO/skills/tool-remote/SKILL.md`。房间脚本 `.cursor/agents/TeamLeader/room.py` 的 `listen` / `watch`。只用派工里的组长 AgentID。`listen` 和 `watch` 只听房间，不看进程、端口、日志。醒来之后按下面核对，再交回。
+  - 盯卡点：`REPO/skills/tool-remote/SKILL.md`。房间脚本 `.cursor/agents/TeamLeader/room.py` 的 `listen` / `watch`。只用派工里的组长 AgentID。`listen` 和 `watch` 只听房间，不看进程、端口、日志。长盯的 `watch` 由组长这条对话挂着。派来核对时看进程和日志；派工写明由你挂监听时，安静周期里不交回。
 
 ## 3 做什么
 
@@ -40,9 +40,10 @@ model: cursor-grok-4.6-medium
   - 起服务是卡点的一种。派工写明端口、探活、业务脚本、日志里必须出现的字。两跳都要看到，缺任一项交回组长，不要只报「服务在起」。路径一律加引号。
   - 8081 接着 generate 按这个闸：`ss` 能看到 `:8081`，并且 `/v1/models` 通。再起 generate。必须看到 `generate.py` 的 PID，且日志里有 `rules_scene-gqa` 和 vLLM 就绪。派工写了别的端口或别的就绪字，按派工那几项，同样缺一就交回。
   - Windows 不起 vLLM / SAM。起之前先 `read` 房间。同一 GPU 或端口已有人 `working`，交回组长，不自己停进程。
-  - 长等或后台任务：先确认这个组长已经 `join`。一夜或十几小时的盯岗，优先挂 `watch --id <组长 AgentID>`：安静时大约每 2 小时打一行 `CHECK`，进程不退；打出 `SAY` / `READY` / `ABSENT` 才退。单次 `watch` 大约 12 小时后打 `TIMEOUT watch still quiet`，再挂同一条。短等仍可用 `listen`（安静约 2 小时打 `TIMEOUT` 后退）。
-  - 三种退出不要混：`CHECK` 或 `TIMEOUT` 是安静，探完进程和日志再挂，不算下班。`SAY` / `READY` 才交回房间原话。子代理自己 `Connection failed` 或对话关掉，循环一起停，这是卡点，立刻交回组长续派，不要当成 generate 收口。
-  - 输出里出现 `SAY` 或 `READY` 就停下来 `read`，把原话和该谁接交回组长。不另编 id。`listen` / `watch` 不看 GPU、端口、进程、日志。
+  - 长等或后台任务：先确认这个组长已经 `join`。一夜或十几小时的房间监听由组长这条对话自己挂 `watch`。运维这一棒只核进程、端口、日志末行，写入票 `todo.md` 后交回，不挂这条唯一的 `watch`。组长大约每 2 小时被 `CHECK` 叫醒后再派下一棒。不要为了一句房间回执结束本棒，让组长新开子代理。
+  - 派工仍要你挂监听时：优先 `watch --id <组长 AgentID>`。`CHECK` 是安静，探完再挂，不交回。`watch` 遇到 `SAY` 不退出。你若在 `listen` 里看见 `SAY`：进程还在、这句话没有叫停、也没有改这轮的卡或顺序，就在票里记一行原话，同一轮再挂，不要结束子代理。进程没了、日志停住、`READY`、`ABSENT`，或这句话要改活，才交回。单次 `watch` 大约 12 小时后打 `TIMEOUT watch still quiet`，再挂同一条。短等仍可用 `listen`（安静约 2 小时打 `TIMEOUT` 后退）。
+  - 三种退出不要混：`CHECK` 或 `TIMEOUT` 是安静，探完进程和日志再挂，不算下班。房间回执且活还在，不算交回。`READY` / `ABSENT` 才交回。子代理自己 `Connection failed` 或对话关掉，循环一起停，这是卡点，交回组长；不要当成 generate 收口。
+  - 输出里出现 `SAY` 或 `READY` 先 `read`。回执且活还在，不把原话当交回理由。不另编 id。`listen` / `watch` 不看 GPU、端口、进程、日志，醒来后再核。
 
 ## 4 禁止
 
@@ -52,6 +53,7 @@ model: cursor-grok-4.6-medium
   - 把 `stale` 或没有 `done` 的 `leave` 当成对方干完。
   - 把 `listen` 的 `READY`、对方 `done`，或「服务在起」当成 8081 或 generate 已经就绪。
   - 把 `CHECK` / `TIMEOUT listen` 或子代理 `Connection failed` 当成 generate 收口或自己下班。
+  - 房间一句回执、训练或业务还在，就结束本棒等组长再派。
   - 停别人的进程。房间对不上是谁的进程，交回组长。
   - 空图、坏图、缺词表、缓存还指向旧路径：交回组长派数据或模型，不在这里改数据。
 

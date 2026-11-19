@@ -1,7 +1,7 @@
 """
 # @Author: Yullin
 # @Date: 2026-11-17
-# @Description: 组长房间。按项目登记在岗、留言、标记干完，并边续心跳边听写给自己的留言
+# @Description: 组长房间。按项目登记在岗、留言、标记干完，并边续心跳边听写给自己的留言。watch 遇到留言只打印，不退出
 # @Command: py -3 .cursor/agents/TeamLeader/room.py listen --id <AgentID>
 # @Command: py -3 .cursor/agents/TeamLeader/room.py watch --id <AgentID>
 """
@@ -399,7 +399,17 @@ def addressed_to(event, agent_id):
     return text == token or text.startswith(token + " ")
 
 
-def listen_until(args, timeout, quiet="TIMEOUT"):
+def fresh_say(event, say_after, skip_equal, printed):
+    if not event or event["raw"] in printed:
+        return False
+    if event["time"] < say_after:
+        return False
+    if skip_equal and event["time"] == say_after:
+        return False
+    return True
+
+
+def listen_until(args, timeout, quiet="TIMEOUT", hold_say=False):
     interval = args.interval if args.interval is not None else POLL
     beat_every = args.beat if args.beat is not None else BEAT_EVERY
     if beat_every <= 0 or beat_every >= int(STALE.total_seconds()):
@@ -408,6 +418,8 @@ def listen_until(args, timeout, quiet="TIMEOUT"):
     deadline = time.time() + timeout
     next_beat = time.time()
     say_after = datetime.now()
+    skip_equal = True
+    printed = set()
     while True:
         with RoomLock():
             leaders = load_leaders()
@@ -425,7 +437,7 @@ def listen_until(args, timeout, quiet="TIMEOUT"):
             says = []
             for line in lines:
                 event = parse_event(line)
-                if not event or event["time"] <= say_after:
+                if not fresh_say(event, say_after, skip_equal, printed):
                     continue
                 if addressed_to(event, args.id):
                     says.append(event)
@@ -442,7 +454,13 @@ def listen_until(args, timeout, quiet="TIMEOUT"):
         if says:
             for event in says:
                 print(f"SAY {event['raw']}", flush=True)
-            return 0
+                printed.add(event["raw"])
+            if not hold_say:
+                return 0
+            say_after = max(event["time"] for event in says)
+            skip_equal = False
+            if time.time() >= deadline:
+                return 3
         if done:
             stamp = done[-1]["time"].strftime("%Y-%m-%d %H:%M:%S")
             print(f"READY project={wait_for} at {stamp}", flush=True)
@@ -470,7 +488,9 @@ def cmd_watch(args):
         if left <= 0:
             print("TIMEOUT watch still quiet", flush=True)
             return 3
-        code = listen_until(args, max(1, int(min(cycle, left))), quiet="CHECK")
+        code = listen_until(
+            args, max(1, int(min(cycle, left))), quiet="CHECK", hold_say=True
+        )
         if code != 3:
             return code
         if time.time() >= end:
