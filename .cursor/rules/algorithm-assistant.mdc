@@ -54,8 +54,8 @@ alwaysApply: true
 ### test-engineer
 
 - 点名：`/test-engineer`
-- 负责：测试，含误检漏检分析。
-- 交回：报告路径 + 误漏检清单 + 建议（下一棒补数还是改配）。
+- 负责：测试。指标只出 `1-Testdir`；可视化对 `1-Testdir` 与 `0-Feedback` 的预测定档。新版本默认用同一套数据对照上一版。
+- 交回：报告路径 + Testdir 指标（若有；新版本含对照表）+ 可视化模式 + 建议（下一棒补数还是改配）。
 
 ### ops-engineer
 
@@ -67,13 +67,18 @@ alwaysApply: true
 
 算法仓上的数据 / 训练 / 测试（YOLOE 同此）：组长派运维核对仓内 `0-Agent-demo`。有则按 `skills/standard-project_agentdemo` 确认；没有则按该技能新建槽、票和 `0-Agent-demo/SKILL.md`，不开训。运维 Read 仓库根 `README.md` 和该 `SKILL.md`：环境、数据格式、脚本对照、训练注意事项、评估和推理、何时停。没核实的节不编，交回组长问用户。YOLOE 一轮在槽内票目录，见 `skills/agent-auto_demo` [§3.1]；别的仓不套开集文件名。没有算法仓的纯数据活跳过这一步，`data_root` 仍须用户给。
 
+## 当日便签
+
+- 用户说看今天的便签、当天任务，或点名某一天：先 Read `workenv/env-local/docs.md` 拿到便签数据目录，再读该目录下对应的 `YYYY-MM-DD.json`。没点名日期就用对话当天。不扫盘，不改便签。
+- 没说拆任务、出工单：只把条目说清楚，不派 `project-engineer`。接着要拆，才把这份 json 当目标文件。
+
 ## 派工
 
-- 按编制里的点名派，含单模块。用户给了目标文件或明说拆任务、出工单，才派 `project-engineer`。数据派 `data-engineer`，训练 / 验证 / 推理和源码适配派 `train-engineer`，测试报告和误检漏检派 `test-engineer`，整理 / 环境 / 盯卡住 / 起服务派 `ops-engineer`。
+- 按编制里的点名派，含单模块。用户给了目标文件或明说拆任务、出工单，才派 `project-engineer`。数据派 `data-engineer`，训练 / 验证 / 推理和源码适配派 `train-engineer`，测试报告、Testdir 指标和可视化派 `test-engineer`，整理 / 环境 / 盯卡住 / 起服务派 `ops-engineer`。
 - prompt 写清 `REPO`、本机或服务器、`data_root` 或算法仓、票或槽、本段交付物、工作区结论（已齐 / 已构建）。盯卡点的派工还要写组长 AgentID，以及这轮的进程、端口或日志路径。起 vLLM 或接着起业务脚本，派工写明端口、探活、脚本、日志里必须出现的字。组长不自己起 vLLM，也不自己等业务脚本。
 - `listen` 打出 `READY` 或对方 `done` 不算服务就绪。运维子代理调不出来时，组长补做同一道核对，写明代查，不要改成只挂 `listen`，同一轮不要连开第二次。
 - 子 Agent 看不到主对话。用户已确认的项写入派工，工程师照单记台账。
-- 五名工程师默认模型是 `cursor-grok-4.6-medium`，写在各自 `.cursor/agents/` 文件里。派工时不要另指定模型，否则会盖掉这个默认。
+- 五名工程师默认模型是 `auto`（额度紧时临时），写在各自 `.cursor/agents/` 文件里。派工时不要另指定模型，否则会盖掉这个默认。
 
 ## 交接
 

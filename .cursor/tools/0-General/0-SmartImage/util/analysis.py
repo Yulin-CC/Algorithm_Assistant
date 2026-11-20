@@ -21,7 +21,7 @@ if _MODEL_UTIL not in sys.path:
 from common import load_json, task_result, task_vis, write_json
 from label_grade import ensure_views, item_grade, run_change, run_dataset
 from label_miss import MISS_SLUG
-from overlay import qa_jsons_dir, resolve_jsons_dir
+from overlay import cd_layout, qa_jsons_dir, resolve_jsons_dir
 
 ANALYSIS_SLUG = "analysis"
 PRED_PART = "pred"
@@ -31,6 +31,14 @@ SAMPLE_N = 3
 
 def result_dir(dataset_root: str) -> str:
     return task_result(dataset_root, ANALYSIS_SLUG)
+
+
+def pred_jsons_dir(dataset_root: str, pred: str, part=None) -> str:
+    folder = resolve_jsons_dir(dataset_root, pred)
+    layout = cd_layout(folder, dataset_root)
+    if layout:
+        return layout["jsons"]
+    return qa_jsons_dir(dataset_root, ANALYSIS_SLUG, part)
 
 
 def analysis_md(dataset_root: str) -> str:
@@ -79,11 +87,12 @@ def source_files(dataset_root: str, jsons: str, limit=None):
     return folder, files, kind
 
 
-def qa_pending(dataset_root: str, files, slug: str, force: bool, part=None) -> bool:
+def qa_pending(dataset_root: str, files, slug: str, force: bool, part=None, jsons_dir="") -> bool:
     if force:
         return True
+    folder = jsons_dir or qa_jsons_dir(dataset_root, slug, part)
     for jp in files:
-        out_p = os.path.join(qa_jsons_dir(dataset_root, slug, part), f"{jp.stem}.json")
+        out_p = os.path.join(folder, f"{jp.stem}.json")
         existing = load_json(out_p) if os.path.isfile(out_p) else None
         if not existing or existing.get("source") in {"failed", "placeholder"}:
             return True
@@ -91,7 +100,8 @@ def qa_pending(dataset_root: str, files, slug: str, force: bool, part=None) -> b
 
 
 def ensure_qa(dataset_root, jsons, slug, files, limit, force, workers, timeout, base_url, model, kind="json", part=None):
-    if not files or not qa_pending(dataset_root, files, slug, force, part):
+    jdir = pred_jsons_dir(dataset_root, jsons, part) if kind == "mask" else ""
+    if not files or not qa_pending(dataset_root, files, slug, force, part, jsons_dir=jdir):
         print(f"沿用已有质检 {slug}/{part or '-'} n={len(files)}")
         return
     if kind == "mask":
@@ -123,10 +133,11 @@ def ensure_qa(dataset_root, jsons, slug, files, limit, force, workers, timeout, 
     )
 
 
-def load_records(dataset_root: str, files, slug: str, part=None):
+def load_records(dataset_root: str, files, slug: str, part=None, pred=""):
     records = []
+    folder = pred_jsons_dir(dataset_root, pred, part) if pred else qa_jsons_dir(dataset_root, slug, part)
     for jp in files:
-        out_p = os.path.join(qa_jsons_dir(dataset_root, slug, part), f"{jp.stem}.json")
+        out_p = os.path.join(folder, f"{jp.stem}.json")
         rec = load_json(out_p) if os.path.isfile(out_p) else None
         if isinstance(rec, dict):
             records.append(rec)
@@ -283,8 +294,14 @@ def group_miss(records) -> list:
     return sorted(buckets.values(), key=lambda row: (-row["n"], row["label"]))
 
 
-def load_miss(dataset_root: str):
-    folder = qa_jsons_dir(dataset_root, MISS_SLUG)
+def load_miss(dataset_root: str, pred: str = ""):
+    folder = ""
+    if pred:
+        layout = cd_layout(resolve_jsons_dir(dataset_root, pred), dataset_root)
+        if layout:
+            folder = os.path.join(layout["miss"], "jsons")
+    if not folder:
+        folder = qa_jsons_dir(dataset_root, MISS_SLUG)
     if not os.path.isdir(folder):
         return None
     records = []
@@ -327,22 +344,46 @@ def build_report(dataset_root, pred, gt, pred_records, gt_records, miss_records=
         report["suggestions"].append("漏检未做。")
     elif report["false_negative"]["n"]:
         report["suggestions"].append(
-            f"漏检 {report['false_negative']['n']} 处。裁图在 draft/miss/crop/，用 opt_fill.py 定位再修边。"
+            f"漏检 {report['false_negative']['n']} 处。裁图在 miss/crop/，用 opt_fill.py 定位再修边。"
         )
     else:
         report["suggestions"].append("漏检已查，没有新的中心。")
     return report
 
 
+def _counts_from_records(records) -> dict:
+    stats = {
+        "fit": 0, "ok": 0, "wrong": 0, "adjust": 0, "n": 0,
+        "images": 0, "fail": 0, "empty": 0,
+    }
+    for rec in records:
+        stats["images"] += 1
+        stats["n"] += int(rec.get("n") or 0)
+        stats["fit"] += int(rec.get("fit") or 0)
+        stats["ok"] += int(rec.get("ok") or 0)
+        stats["wrong"] += int(rec.get("wrong") or 0)
+        stats["adjust"] += int(rec.get("adjust") or 0)
+        if rec.get("source") == "failed":
+            stats["fail"] += 1
+        if rec.get("source") == "empty":
+            stats["empty"] += 1
+    return stats
+
+
 def analyze(dataset_root, pred, gt="", limit=None, force=False, workers=2,
             timeout=600, base_url="", model=""):
     _, pred_files, pred_kind = source_files(dataset_root, pred, limit)
+    mask_dir = resolve_jsons_dir(dataset_root, pred)
+    layout = cd_layout(mask_dir, dataset_root) if pred_kind == "mask" else None
     ensure_qa(
         dataset_root, pred, ANALYSIS_SLUG, pred_files, limit, force,
         workers, timeout, base_url, model, kind=pred_kind, part=PRED_PART,
     )
-    ensure_views(dataset_root, ANALYSIS_SLUG, PRED_PART)
-    pred_records = load_records(dataset_root, pred_files, ANALYSIS_SLUG, PRED_PART)
+    if not layout:
+        ensure_views(dataset_root, ANALYSIS_SLUG, PRED_PART)
+    pred_records = load_records(
+        dataset_root, pred_files, ANALYSIS_SLUG, PRED_PART, pred=pred,
+    )
     gt_records = []
     if gt:
         _, gt_files, gt_kind = source_files(dataset_root, gt, limit)
@@ -350,23 +391,38 @@ def analyze(dataset_root, pred, gt="", limit=None, force=False, workers=2,
             dataset_root, gt, ANALYSIS_SLUG, gt_files, limit, force,
             workers, timeout, base_url, model, kind=gt_kind, part=GT_PART,
         )
-        ensure_views(dataset_root, ANALYSIS_SLUG, GT_PART)
+        if not layout:
+            ensure_views(dataset_root, ANALYSIS_SLUG, GT_PART)
         gt_records = load_records(dataset_root, gt_files, ANALYSIS_SLUG, GT_PART)
     report = build_report(
-        dataset_root, pred, gt, pred_records, gt_records, load_miss(dataset_root),
+        dataset_root, pred, gt, pred_records, gt_records, load_miss(dataset_root, pred),
     )
-    write_json(analysis_json(dataset_root), report)
-    md_path = analysis_md(dataset_root)
-    os.makedirs(os.path.dirname(md_path), exist_ok=True)
-    with open(md_path, "w", encoding="utf-8") as f:
-        f.write(render_md(report))
-    old_md = os.path.join(result_dir(dataset_root), "analysis.md")
-    if os.path.isfile(old_md) and os.path.abspath(old_md) != os.path.abspath(md_path):
-        os.remove(old_md)
+    counts = _counts_from_records(pred_records)
+    adjust_section = report.get("adjust")
+    report.update(counts)
+    if isinstance(adjust_section, dict):
+        report["adjust"] = adjust_section
+        report["adjust_grades"] = counts["adjust"]
+    if layout:
+        report["crop"] = layout["crop"]
+        report["jsons"] = layout["jsons"]
+        write_json(layout["analysis_json"], report)
+        out = layout["analysis_json"]
+    else:
+        write_json(analysis_json(dataset_root), report)
+        md_path = analysis_md(dataset_root)
+        os.makedirs(os.path.dirname(md_path), exist_ok=True)
+        with open(md_path, "w", encoding="utf-8") as f:
+            f.write(render_md(report))
+        old_md = os.path.join(result_dir(dataset_root), "analysis.md")
+        if os.path.isfile(old_md) and os.path.abspath(old_md) != os.path.abspath(md_path):
+            os.remove(old_md)
+        out = md_path
+    adj_n = report["adjust"]["n"] if isinstance(report.get("adjust"), dict) else int(report.get("adjust") or 0)
     print(
         f"analysis 误检={report['false_positive']['n']} "
-        f"不贴={report['adjust']['n']} 标签问题={report['label_issue']['n']} "
-        f"漏检={report['fn'] if report['fn'] == '未做' else report['false_negative']['n']} → {md_path}"
+        f"不贴={adj_n} 标签问题={report['label_issue']['n']} "
+        f"漏检={report['fn'] if report['fn'] == '未做' else report['false_negative']['n']} → {out}"
     )
     return report
 

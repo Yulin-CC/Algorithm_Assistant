@@ -6,4 +6,4 @@
 # 6 结果分析：import analysis → analyze（误检、不贴合、已有漏检；不再问模型）
 # 叠图：import overlay。只画框和掩膜，不调用模型。
 # 变化检测：import label_grade → run_change（--masks）。两期整图在 overlay.save_change_overview。
-# 中间文件：定档 draft/overlay/。待查裁图 draft/to_check/<类别>/wrong|adjust（变化检测另有 fit）。漏检 draft/miss/。补标 draft/fill/。调整 draft/adjust/。分析 draft/analysis/。
+# 中间文件：检测定档 draft/overlay/。变化检测：repro/<版本>/{crop/analysis_crop,crop/vismask_crop,analysis}；漏检补标调整在 repro/<版本>/draft/{miss,fill,adjust}。

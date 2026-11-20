@@ -33,6 +33,7 @@ import numpy as np
 from common import ensure_dir, load_json, resolve_images_dir, task_draft, write_json
 from describe import _make_client
 from overlay import (
+    cd_layout,
     cover_gray,
     model_dir,
     shape_kind,
@@ -585,13 +586,15 @@ def place_cd_points(points, left_w, right_w, height, gray_left, gray_right) -> l
     return placed
 
 
-def _pack_phases(dataset_root, stem, before, after, placed, side) -> list:
+def _pack_phases(dataset_root, stem, before, after, placed, side, folder=None) -> list:
     rows = []
     for phase, image in (("t1", before), ("t2", after)):
         group = [item for item in placed if item.get("phase") == phase]
         if not group:
             continue
-        packed = pack_crops(dataset_root, f"{stem}__{phase}", image, group, side)
+        packed = pack_crops(
+            dataset_root, f"{stem}__{phase}", image, group, side, folder=folder,
+        )
         for row in packed:
             row["phase"] = phase
         rows.extend(packed)
@@ -623,9 +626,10 @@ def run_cd_job(client, dataset_root, job, prompt, side) -> dict:
     gray_left = paint_gray(before, mask)
     gray_right = paint_gray(after, mask)
     view = stitch(gray_left, gray_right)
-    m_path = os.path.join(model_dir(dataset_root, MISS_SLUG), model_name_for(stem, None))
-    v_path = os.path.join(vis_dir(dataset_root, MISS_SLUG), f"{stem}.jpg")
-    save_jpg(v_path, view)
+    crop_root = job.get("crop_dir") or crop_dir(dataset_root)
+    ensure_dir(crop_root)
+    m_path = os.path.join(crop_root, f"{stem}.jpg")
+    save_jpg(m_path, view)
     verdict = ask_cd(client, view, prompt, m_path)
     placed = []
     if verdict.get("source") == "vllm":
@@ -634,10 +638,12 @@ def run_cd_job(client, dataset_root, job, prompt, side) -> dict:
             gray_left.shape[1], gray_right.shape[1], gray_left.shape[0],
             gray_left, gray_right,
         )
-    miss = _pack_phases(dataset_root, stem, before, after, placed, side) if placed else []
+    miss = _pack_phases(
+        dataset_root, stem, before, after, placed, side, folder=crop_root,
+    ) if placed else []
     base.update({
         "model": m_path,
-        "vis": v_path,
+        "vis": m_path,
         "n": len(miss),
         "n_points": len(placed),
         "source": verdict.get("source"),
@@ -668,11 +674,11 @@ def run_miss_change(dataset_root, masks="label", prompt="", prompt_file="", limi
     )
     if limit:
         files = files[: int(limit)]
-    out_dir = qa_jsons_dir(dataset_root, MISS_SLUG)
+    layout = cd_layout(mask_dir, dataset_root)
+    out_dir = os.path.join(layout["miss"], "jsons") if layout else qa_jsons_dir(dataset_root, MISS_SLUG)
+    crop_root = os.path.join(layout["miss"], "crop") if layout else crop_dir(dataset_root)
     ensure_dir(out_dir)
-    ensure_dir(model_dir(dataset_root, MISS_SLUG))
-    ensure_dir(vis_dir(dataset_root, MISS_SLUG))
-    ensure_dir(crop_dir(dataset_root))
+    ensure_dir(crop_root)
     jobs, skipped = [], 0
     for path in files:
         out_p = os.path.join(out_dir, f"{path.stem}.json")
@@ -687,6 +693,7 @@ def run_miss_change(dataset_root, masks="label", prompt="", prompt_file="", limi
             "after": pair[1] if pair else "",
             "mask": str(path),
             "out_p": out_p,
+            "crop_dir": crop_root,
             "error": "" if pair else "A/B 没有同名图",
         })
     if not jobs:

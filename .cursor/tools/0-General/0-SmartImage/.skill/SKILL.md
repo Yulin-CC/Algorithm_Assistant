@@ -29,10 +29,10 @@ disable-model-invocation: true
   - **触发**：识图、描述图像、图像理解、误检过滤、叠图质检、漏检、补标、标签调整；由 `agent-smart-image` 指定本叶。
   - **本包根目录 `PKG_ROOT`**：`.skill/` 的上一级。
   - **数据**：单张绝对路径，或数据集目录（`images/` 或根下直接放图）。禁止猜测。
-  - **落盘**（数据集，相对 `data_root`）：`model/` 是发给模型的图；`vis/` 是给人看的整图和表；`result/` 是 json。理解图像写 `draft/describe/result/jsons/{stem}.json`，两期拼图另存 `draft/describe/model/{stem}.jpg`。预标过滤写 `draft/overlay/`。`wrong` 和 `adjust` 的裁图另抄到 `draft/to_check/<类别>/wrong` 与 `adjust`。变化检测 `--masks` 另抄 `fit`。结果分析只写 `draft/analysis/`。都不写正式 `labels/`，不改已有 LabelMe。旧路径 `draft/descriptions/` 仅作续跑读取。
+  - **落盘**（数据集，相对 `data_root`）：`model/` 是发给模型的图；`vis/` 是给人看的整图和表；`result/` 是 json。理解图像写 `draft/describe/result/jsons/{stem}.json`，两期拼图另存 `draft/describe/model/{stem}.jpg`。预标过滤写 `draft/overlay/`。`wrong` 和 `adjust` 的裁图另抄到 `draft/to_check/<类别>/wrong` 与 `adjust`。变化检测 `--masks` 另抄 `fit`。结果分析：变化检测不写 `draft/`，写 `repro/<版本>/analysis/`；目标框写 `draft/analysis/`。都不写正式 `labels/`，不改已有 LabelMe。旧路径 `draft/descriptions/` 仅作续跑读取。
   - **服务**：vLLM `model/config/vllm_server.json`。联通检查由 **总调度** 先做（`--skip-sam`）。本叶不再探测、**不下任何权重**。
   - **共享客户端**：`REPO/model/util/`（`vllm_client.py` / `common.py`）。
-  - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，venv slug=`describe-qwen`，`PKGS=tqdm`（叠图质检另加 `opencv-python numpy`）。Windows 控制台 `PYTHONUTF8=1`。用户指定 conda `yulin` 时用该解释器，不另建 venv。
+  - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，venv slug=`describe-qwen`，`PKGS=tqdm`（叠图质检另加 `opencv-python numpy`）。Windows 控制台 `PYTHONUTF8=1`。用户指定 conda 环境时用该解释器，不另建 venv。
   - **不做**：不分类、不出框、不分割、不写 `labels/`、不下载 Qwen 权重。不改写 `jsons-det-pre*` 或任何已有 LabelMe。调整只写 `draft/adjust/`。不执行 `uv cache clean`。不写 `agent-auto_demo`。不把 DetSeg 的 `--gate` 当本叶入口。
 
 ---
@@ -103,7 +103,7 @@ disable-model-invocation: true
 
   变化检测要求 `<cd_root>/A` 与 `B` 同名且已对齐。`--masks` 是 png 变化图，每个连通域裁同一窗口，左右都叠上掩膜。`grade=wrong` 是假变化。
 
-  发给模型的矩形内部铺淡色，给人看的仍是亮框。类别名里带颜色时，发给模型的框和掩膜只描边，内部不铺色。多边形画半透明掩膜。两者都记 `grade`：`fit` 贴合，`adjust` 目标在但区域过大、不完整或错位（`issue=oversize|incomplete|shifted`），`wrong` 误检。同一次回复先判断类别是否存在，再判断区域质量。`present=true` 却给 `wrong` 时改成 `adjust`。`adjust` 不算误检。预标过滤：`draft/overlay/model/`（裁图；变化检测连通域裁窗 3.5 倍）、`vis/`（整图，绿贴合、橙要改、红误检）、`vis/summary.md`（逐条表格：档位、理由、裁图、整图）、`result/jsons/`、`result/summary.json`、`progress.json`。`wrong` 与 `adjust` 抄到 `draft/to_check/<类别>/`。检测分割抄裁图，`fit` 不抄。变化检测 `to_check` 是全景整图、只画当前这一块连通域（一块一张，文件名带序号），并另抄 `fit`。叠图和发给 Qwen 的裁图都不写字（无编号、无 T1/T2），只留彩色轮廓；小连通域也按地物判断。跑完把 `summary.md` 的表格贴回给用户，并给出该文件路径和 `draft/to_check/`。
+  发给模型的矩形内部铺淡色，给人看的仍是亮框。类别名里带颜色时，发给模型的框和掩膜只描边，内部不铺色。多边形画半透明掩膜。两者都记 `grade`：`fit` 贴合，`adjust` 目标在但区域过大、不完整或错位（`issue=oversize|incomplete|shifted`），`wrong` 误检。同一次回复先判断类别是否存在，再判断区域质量。`present=true` 却给 `wrong` 时改成 `adjust`。`adjust` 不算误检。预标过滤：`draft/overlay/model/`（裁图；变化检测连通域裁窗 4.5 倍）、`vis/`（整图，绿贴合、橙要改、红误检）、`vis/summary.md`（逐条表格：档位、理由、裁图、整图）、`result/jsons/`、`result/summary.json`、`progress.json`。`wrong` 与 `adjust` 抄到 `draft/to_check/<类别>/`。检测分割抄裁图，`fit` 不抄。变化检测 `to_check` 是全景整图、只画当前这一块连通域（一块一张，文件名带序号），并另抄 `fit`。叠图和发给 Qwen 的裁图都不写字（无编号、无 T1/T2），只留彩色轮廓；小于 32 像素的碎斑不送模型，也不决定这张图进负样本还是正样本。不小于 32 像素的才按地物判断。跑完把 `summary.md` 的表格贴回给用户，并给出该文件路径和 `draft/to_check/`。
 
   **(4)** 掩膜结果分析（在定档上汇总，不改写标注。有漏检结果就计入，没有就写未做）：
 
@@ -112,22 +112,19 @@ disable-model-invocation: true
     "$PY" util/analysis.py --dataset "<cd_root>" --pred "<bcd_map>" --gt label --workers 2
     ```
 
-  `--gt` 可省略。预测和标注都写在 `draft/analysis/`，不另开目录。已有结果且不加 `--force` 时不重问 Qwen，缺图会补进对应的 `model/`、`vis/`。
+  `--gt` 可省略。**变化检测** `--pred` 指向 `repro/<版本>/bcd_map` 时，Qwen 用同级 `crop/analysis_crop/`（不另写 `model/`），判定写 `repro/<版本>/analysis/jsons/` 与 `analysis.json`（计数融进该文件，不再写 `summary.json`）。已有 json 且不加 `--force` 时不重问。
 
     ```text
-    draft/analysis/model/pred/          预测，发给模型的图
-    draft/analysis/model/gt/            标注，发给模型的图
-    draft/analysis/vis/pred/            预测整图、summary.md
-    draft/analysis/vis/gt/              标注整图、summary.md
-    draft/analysis/vis/analysis.md      给人看的汇总
-    draft/analysis/result/pred/jsons/   预测逐条判定
-    draft/analysis/result/pred/summary.json
-    draft/analysis/result/gt/jsons/
-    draft/analysis/result/gt/summary.json
-    draft/analysis/result/analysis.json
+    repro/<版本>/bcd_map/               二值预测
+    repro/<版本>/crop/analysis_crop/    Qwen 识图（无 GT）；窗名单以同级 vismask_crop 为准，同名取图，缺图不补写
+    repro/<版本>/crop/vismask_crop/     GT 分色裁窗；定档按这里的窗枚举
+    repro/<版本>/crop/vismask_crop/     同一窗口裁全图 GT 分色叠图
+    repro/<版本>/vismask/               全图：有 GT 时绿交叠 / 红仅预测 / 蓝仅 GT；无 GT 只叠红预测
+    repro/<版本>/analysis/jsons/        每张图判定
+    repro/<版本>/analysis/analysis.json 汇总（含原 summary 计数）
     ```
 
-  `grade=wrong` 算误检；`grade=adjust` 单列，不算误检；GT 上的 `wrong` / `adjust` 算标签问题。旧结果里的 `fit=miss` 按 `wrong` 读。变化检测和目标框用同一组路径。
+  目标框定档仍写 `draft/analysis/`（`model/` / `vis/` / `result/`）。`grade=wrong` 算误检；`grade=adjust` 单列；GT 上的 `wrong` / `adjust` 算标签问题。旧结果里的 `fit=miss` 按 `wrong` 读。
 
 ---
 

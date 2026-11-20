@@ -21,7 +21,8 @@ workenv/
 │   ├── projects.md      # 项目根，仓库一层
 │   └── docs.md          # 本机工作方式
 ├── API-server.md        # 探活、自搭建说明、付费 API、按次脚本
-└── link.md              # 主机、目录对应、启动脚本、URL、按次脚本
+├── link.md              # 主机、目录对应、启动脚本、URL、按次脚本
+└── habits.md            # 个人习惯画像：已确认的长期偏好
 ```
 
 没填服务器就不建 `env-<主机>/`。
@@ -35,6 +36,7 @@ workenv/
 - 主机、目录对应、启动脚本、服务 URL：改 `link.md`，然后写回两个 json。
 - 服务通不通、自搭建、付费 API、按次脚本：改 `API-server.md`。改了 URL 同样写回两个 json。没有 URL 的按次脚本不写回 json。
 - 初始化步骤：`require.md` 与 `.cursor/agents/require.md` 是同一份，改一处时两处一起改。
+- 个人习惯：改 `habits.md`。只由组长改。用户改口标已确认；观察中不当依据。不写某张票的路径和张数。路径仍写 `link.md` 和 `env-*`。
 
 ---
 

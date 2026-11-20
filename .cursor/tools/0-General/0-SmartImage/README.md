@@ -81,7 +81,7 @@ python util/label_grade.py --dataset "<data_root>" --jsons jsons --mode instance
 └── progress.json
 ```
 
-`wrong` 与 `adjust` 抄到 `draft/to_check/<类别>/`。检测分割抄 `overlay/model/` 裁图，`fit` 不抄。变化检测 `--masks` 的 `to_check` 是全景整图、只画当前这一块连通域（文件名 `图__000.jpg`），同图多块就多张；并另抄 `fit`。叠图和发给 Qwen 的裁图都不写字（无编号、无 T1/T2），只留彩色轮廓。发给 Qwen 的 `overlay/model/` 按连通域裁窗 `CROP_SCALE=3.5`。
+`wrong` 与 `adjust` 抄到 `draft/to_check/<类别>/`。检测分割抄 `overlay/model/` 裁图，`fit` 不抄。变化检测 `--masks` 的 `to_check` 是全景整图、只画当前这一块连通域（文件名 `图__000.jpg`），同图多块就多张；并另抄 `fit`。叠图和发给 Qwen 的裁图都不写字（无编号、无 T1/T2），只留彩色轮廓。发给 Qwen 的 `overlay/model/` 按连通域裁窗 `CROP_SCALE=4.5`，轮廓是 1 像素细线，不描黑边。
 
 发给模型的矩形内部铺淡色，给人看的仍是亮框。类别名里带颜色时，框和掩膜只描边，内部不铺色。
 
@@ -181,4 +181,4 @@ python util/analysis.py --dataset "<data_root>" --pred jsons-seg-pre --gt jsons 
 python util/analysis.py --dataset "<cd_root>" --pred "<bcd_map>" --gt label --workers 2
 ```
 
-`--gt` 可省略。`grade=wrong` 算误检，`grade=adjust` 单列。预测和标注都写在 `draft/analysis/`：`model/` 发给模型的图，`vis/` 给人看，`result/` 是 json。预测在 `pred/`，标注在 `gt/`。png 变化图和目标框用同一组路径。
+`--gt` 可省略。`grade=wrong` 算误检，`grade=adjust` 单列。变化检测测试分析写 `repro/<版本>/analysis/`（`jsons/` + `analysis.json`），Qwen 用 `crop/analysis_crop/`。漏检/补标/调整拢在 `repro/<版本>/draft/` 下的 `miss/`、`fill/`、`adjust/`。目标框仍写数据集根 `draft/`。

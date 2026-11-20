@@ -91,6 +91,47 @@ def summary_path(dataset_root: str, slug=None, part=None) -> str:
     return os.path.join(pkg_result(dataset_root, slug, part), "summary.json")
 
 
+def repro_version_dir(masks: str, dataset_root: str = "") -> str:
+    """变化检测产物根：优先 `repro/<版本>`，否则 `bcd_map` 的上一级，再否则数据集根。不写 draft。"""
+    raw = os.path.abspath(str(masks or "").strip())
+    p = Path(raw) if raw else None
+    if p and p.is_file():
+        p = p.parent
+    if p:
+        if p.name in {"bcd_map", "bcd_map_cd"}:
+            return str(p.parent)
+        if (p / "bcd_map").is_dir():
+            return str(p)
+    root = os.path.abspath(str(dataset_root or "").strip())
+    return root
+
+
+def cd_layout(masks: str, dataset_root: str = ""):
+    """变化检测：窗以 crop/vismask_crop 为准；Qwen 看同名 crop/analysis_crop。漏检补标调整在版本下 draft/。"""
+    ver = repro_version_dir(masks, dataset_root)
+    if not ver:
+        return None
+    analysis = os.path.join(ver, "analysis")
+    crop_root = os.path.join(ver, "crop")
+    return {
+        "version": ver,
+        "crop": os.path.join(crop_root, "analysis_crop"),
+        "analysis_crop": os.path.join(crop_root, "analysis_crop"),
+        "vismask_crop": os.path.join(crop_root, "vismask_crop"),
+        "analysis": analysis,
+        "jsons": os.path.join(analysis, "jsons"),
+        "analysis_json": os.path.join(analysis, "analysis.json"),
+        "to_check": os.path.join(ver, "to_check"),
+        "miss": os.path.join(ver, "draft", "miss"),
+        "fill": os.path.join(ver, "draft", "fill"),
+        "adjust": os.path.join(ver, "draft", "adjust"),
+    }
+
+
+def crop_name_for(stem: str, index) -> str:
+    return f"{stem}_{int(index) + 1:02d}.jpg"
+
+
 def progress_path(dataset_root: str, slug=None, part=None) -> str:
     return pkg_draft_progress(dataset_root, slug, part)
 

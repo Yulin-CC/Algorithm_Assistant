@@ -25,7 +25,7 @@ if _MODEL_UTIL not in sys.path:
     sys.path.insert(0, _MODEL_UTIL)
 
 from common import ensure_dir, load_json, task_draft, write_json
-from overlay import qa_jsons_dir, shape_xyxy
+from overlay import cd_layout, qa_jsons_dir, resolve_jsons_dir, shape_xyxy
 
 FILL_SLUG = "fill"
 MISS_SLUG = "miss"
@@ -367,7 +367,7 @@ def count_status(rows) -> dict:
 
 
 def run_fill(dataset_root, shape, locate="gpi", refine="sam", weights="", base_url="",
-             model="", timeout=600, device="0", limit=None):
+             model="", timeout=600, device="0", limit=None, masks=""):
     """定位用数据引擎单图函数。修边用 Triton SAM。不改原标注，不再问 Qwen。"""
     shape = str(shape or "").strip().lower()
     locate = str(locate or "gpi").strip().lower()
@@ -380,7 +380,8 @@ def run_fill(dataset_root, shape, locate="gpi", refine="sam", weights="", base_u
         raise SystemExit("locate 和 refine 不能同时关掉")
     if shape == "mask" and refine != "sam":
         raise SystemExit("掩膜要 Triton SAM 出结果。直出框时用 --shape box --refine off")
-    folder = qa_jsons_dir(dataset_root, MISS_SLUG)
+    layout = cd_layout(resolve_jsons_dir(dataset_root, masks), dataset_root) if masks else None
+    folder = os.path.join(layout["miss"], "jsons") if layout else qa_jsons_dir(dataset_root, MISS_SLUG)
     if not os.path.isdir(folder):
         raise SystemExit(f"先跑 label_miss.py，找不到 {folder}")
     files = sorted(Path(folder).glob("*.json"))
@@ -411,9 +412,16 @@ def run_fill(dataset_root, shape, locate="gpi", refine="sam", weights="", base_u
     if has_crop and refine == "sam":
         from sam_client import TritonSAM
         sam = TritonSAM()
-    out_dir = qa_jsons_dir(dataset_root, FILL_SLUG)
+    if paired:
+        if not layout:
+            first_mask = str((records[0][1] or {}).get("mask") or "")
+            layout = cd_layout(first_mask, dataset_root)
+        out_dir = os.path.join(layout["fill"], "jsons")
+        mask_dir = os.path.join(layout["fill"], "masks")
+    else:
+        out_dir = qa_jsons_dir(dataset_root, FILL_SLUG)
+        mask_dir = os.path.join(task_draft(dataset_root, FILL_SLUG), "masks")
     ensure_dir(out_dir)
-    mask_dir = os.path.join(task_draft(dataset_root, FILL_SLUG), "masks")
     totals = {"filled": 0, "dropped": 0, "empty": 0, "failed": 0}
     for path, rec in records:
         existing = [] if rec.get("pair") else load_shapes(str(rec.get("json") or ""))
@@ -490,6 +498,7 @@ def parse_args():
     p.add_argument("--model", default="")
     p.add_argument("--timeout", type=int, default=600)
     p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--masks", default="", help="变化检测：漏检 json 在该版本 miss/jsons，补标写 fill/")
     return p.parse_args()
 
 
@@ -506,4 +515,5 @@ if __name__ == "__main__":
         timeout=args.timeout,
         device=args.device,
         limit=args.limit,
+        masks=args.masks,
     )

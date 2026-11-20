@@ -1,6 +1,6 @@
 # 🧰 Agent Skills 工作区
 
-给标注 / 数据产线用的 Agent 工作区：组长加四名工程师。人说话 → `skills/` 调度 → `tools/` 叶子干活。叶子不下载权重、不私自写正式 `labels/` / `jsons/`（整理叶除外）。环境默认 **uv**（`tool-build_env`，由运维装）。产线总览在仓库根目录 [README.md](../README.md)。
+给标注 / 数据产线用的 Agent 工作区：组长加五名工程师。人说话 → `skills/` 调度 → `tools/` 叶子干活。叶子不下载权重、不私自写正式 `labels/` / `jsons/`（整理叶除外）。环境默认 **uv**（`tool-build_env`，由运维装）。产线总览在仓库根目录 [README.md](../README.md)。
 
 - [1 怎么分层](#1-怎么分层)
 - [2 调度技能（`skills/`）](#2-调度技能skills)
@@ -49,7 +49,7 @@
 | Skill | 功能 |
 | --- | --- |
 | `agent-data_engine` | 数据引擎总调度。已接线：整理、Qwen 分类、YOLO26、SAM3、GroundingPI。预标没点名后端时默认 GroundingPI；旧说法「Qwen 检测」也改走它，不再调度 `2-Image-DetSeg/qwen`。分类与 GroundingPI 先 probe。GD 叶未接线则停。 |
-| `agent-customer_task` | 在 `customer/<kind>-<yymmdd>-<slug>/` 建票：`.skill` + `require` + `util` + `todo.md`。 |
+| `agent-customer_task` | 在 `customer/<kind>-<yymmdd>-<slug>/` 建票：`.skill` + `require` + `util` + `todo.md`。`kind` 含 `proj`（项目工单，不绑叶子）。 |
 | `agent-pyramidlabel` | 金字塔迭代扩标。 |
 | `agent-auto_demo` | 各算法仓 `0-Agent-demo` 三槽训练 / 验证 / 推理。三槽由运维在派工前核对或新建，结论写入派工。确认 `Customer.md` 再开跑。 |
 | `agent-source_adapt` | 把上游一个功能切进指定仓库。派工写明仓库、commit、功能名。不整包升级，不开训。日常三槽仍不改上游。 |
@@ -60,7 +60,7 @@
 
 图像理解、掩膜/框质量判断、漏检补标和 adjust 调整走 `agent-smart_image` → `tools/0-General/0-SmartImage`（不走 DataEngine）。不改原标注。
 
-工程师（`.cursor/agents/`；数据、模型、测试、运维含单模块都由组长派）：`data-engineer` 数据处理；`train-engineer` 模型（训练、验证、推理；派工写明时做源码适配）；`test-engineer` 测试，含误检漏检分析；`ops-engineer` 项目整理、装环境（`tool-build_env`）、未归类杂活，以及盯这轮工作有没有卡点。`listen` 的 `READY` 不算活已经在往前走。组长之间按项目等活，用 `agents/TeamLeader/room.py`，不另建组长工程师。运维不进房间，心跳只用派工里的组长 AgentID。四名工程师默认模型是 Cursor Grok 4.6 medium，派工时不要另指定模型。长盯由这条组长对话挂 `watch`，运维另盯进程。
+工程师（`.cursor/agents/`；项目、数据、模型、测试、运维含单模块都由组长派）：`project-engineer` 先对在岗落盘再拆单，盘上已有的（如 `dsample`）不问不挖，执行决策找组长、不逐步问用户；`data-engineer` 数据处理；`train-engineer` 模型（训练、验证、推理；派工写明时做源码适配）；`test-engineer` 测试（Testdir 指标 + Testdir/Feedback 可视化；新版本对照上一版）；`ops-engineer` 项目整理、装环境（`tool-build_env`）、未归类杂活，以及盯这轮工作有没有卡点。`listen` 的 `READY` 不算活已经在往前走。组长之间按项目等活，用 `agents/TeamLeader/room.py`，不另建组长工程师。工程师不进房间，心跳只用派工里的组长 AgentID。五名工程师默认模型是 auto（额度紧时临时），派工时不要另指定模型。
 
 ---
 
@@ -73,7 +73,7 @@
 | # | 能力 | 落点 | 状态 |
 | --- | --- | --- | --- |
 | 1 | 图像理解 / 描述 | `util/describe.py` | 已实现。单张 stdout；数据集 `draft/describe/result/jsons/{stem}.json`。两期拼图在 `draft/describe/model/` |
-| 2 | 图像掩膜 / 框的分析 | `util/analysis.py` | 已实现，归测试工程师。汇总在 `draft/analysis/`。误检和不贴合来自定档；有 `draft/miss/` 时一并计入漏检。不改写原标注 |
+| 2 | 图像掩膜 / 框的分析 | `util/analysis.py` | 已实现，归测试工程师。测试可视化：`--pred`、省略 `--gt`。变化检测写 `repro/<版本>/analysis/`。缺结果时问 Qwen。有 `draft/miss/` 时计入漏检。不改写原标注 |
 | 3 | 图像掩膜 / 框的三档质量判断 | `util/label_grade.py` | 已实现。`fit` 贴合，`adjust` 过大、不完整或错位，`wrong` 误检。叠图在 `util/overlay.py`，不调用模型。预标过滤写 `draft/overlay/`，`wrong` 和 `adjust` 的裁图另抄到 `draft/to_check/<类别>/`。变化检测 `--masks` 另抄 `fit`。漏检和差检先确认提示词，再走 Qwen 报点加 Triton SAM，不走 GroundingPI。不改写原标注 |
 | 4 | 图像掩膜 / 框的调整 | `util/opt_adjust.py` | 已实现。定档 `adjust` 的框中心当报点，再走补标链，写 `draft/adjust/`。漏检 `label_miss.py`，补标 `opt_fill.py`。不改原标注 |
 
@@ -88,7 +88,7 @@
 | `util/run.py` | 在允许路径内跑 `.py` / `.sh`，超时并截断输出 |
 | `util/paths.py` | **路径白名单**（不是容器沙箱） |
 
-默认允许根：家目录、临时目录、`/tmp`。其它根用 `LOCALMACHINE_ROOTS`。
+默认允许根：家目录、临时目录、已存在的本机数据根 / 项目根 / 文档根、`/tmp`。再加 `LOCALMACHINE_ROOTS`。
 
 ```bash
 python tools/0-General/1-LocalMachine/util/system.py gpu
@@ -201,7 +201,7 @@ customer/<票>/
 | AgentScope Runtime Sandbox | 代码 / 浏览器 / 文件系统隔离；Docker 或阿里云 AgentRun | https://runtime.agentscope.io/zh/sandbox/sandbox_service.html |
 | AIO Sandbox（All-In-One） | 代码解释器 + 无头浏览器；REST / MCP；云上对应阿里云函数计算 | https://github.com/agent-infra/sandbox |
 
-**状态：未接入。** 数据根上的产线继续只用白名单。
+**状态：未接入。** 本机数据根的产线继续只用白名单。
 
 ---
 

@@ -16,8 +16,8 @@ import numpy as np
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 MIN_AREA = 32
 STITCH_GAP = 8
-# 连通域裁窗：旧默认 2.5。再扩两圈（每圈半个框边 = 0.5）→ 3.5。发给 Qwen 的 overlay/model 用这个。
-CROP_SCALE = 3.5
+# 连通域裁窗。发给 Qwen 的 overlay/model 用这个。3.5 仍偏紧，放到 4.5。
+CROP_SCALE = 4.5
 COVER_GRAY = (144, 144, 144)
 _PROMPT_EMPTY = (
     "变化检测要先确认定位什么。把用户确认过的提示词传给 --prompt 或 --prompt-file。"
@@ -30,11 +30,18 @@ CD_DESCRIBE = (
     "没有明显变化就直接说没有。2–6 句。不要编造看不清的细节。"
 )
 
+CD_MARK = (
+    "两边同一位置有一条细线，圈出要判断的掩膜，内部只有很淡的着色。"
+    "细线和淡色只是位置标记，不是地物。"
+    "线的颜色、粗细和淡色填充都不是物体的颜色、材质或形状。"
+    "不要因为线是红的，就把里面说成红色车辆或红色屋顶。"
+    "看线里面原图的纹理和形状。"
+    "图上没有文字，没有 T1、T2 或编号。"
+)
+
 CD_MASK = (
     "左图是前时相，右图是后时相，已经对齐。"
-    "两边同一位置的彩色轮廓圈出变化掩膜，内部只有很淡的着色，不是框。"
-    "按轮廓定位。轮廓里的纹理和颜色以原图为准，不要被淡色带偏。"
-    "图上不要写字，没有 T1、T2 或编号；不要把叠色或轮廓当成文字标记。"
+    + CD_MARK +
     "小连通域也要按地物判断，不要因为面积小就当噪声。"
     "判断这块在两期之间是不是真实变化，以及掩膜是否罩住变化范围。"
     "分两步。看不出变化（配准误差、季节、阴影、两期本来一样）：present=false，grade=wrong。"
@@ -52,6 +59,14 @@ CD_MASK = (
 )
 
 
+def resolve_grade_prompt(prompt="", prompt_file="") -> str:
+    """整段定档提示原样使用。短任务句再套上掩膜说明。"""
+    text = require_task(prompt, prompt_file) if (prompt or prompt_file) else ""
+    if "只返回 JSON" in text:
+        return text
+    return cd_grade_prompt(text)
+
+
 def cd_grade_prompt(task: str = "") -> str:
     """定档提示。空则用 CD_MASK；有本单句子则只判该类变化。"""
     task = str(task or "").strip()
@@ -59,18 +74,16 @@ def cd_grade_prompt(task: str = "") -> str:
         return CD_MASK
     return (
         "左图是前时相，右图是后时相，已经对齐。"
-        "两边同一位置的彩色轮廓圈出变化掩膜，内部只有很淡的着色，不是框。"
-        "按轮廓定位。轮廓里的纹理和颜色以原图为准，不要被淡色带偏。"
-        "图上不要写字，没有 T1、T2 或编号；不要把叠色或轮廓当成文字标记。"
+        + CD_MARK +
         "小连通域也要按地物判断，不要因为面积小就当噪声。"
         f"本单只判断这类变化：{task}。"
-        "分两步。看不出本单定义的土地变化"
-        "（配准误差、季节长势、阴影、两期地类本来一样、"
-        "只是作物颜色或建筑外观变了但地类未变）：present=false，grade=wrong。"
-        "能看出本单定义的土地变化：present=true，不得给 wrong。"
-        "是土地变化，掩膜内没变化的区域比变化本身还大：grade=adjust，issue=oversize。"
-        "是土地变化，但有一大块真变化在掩膜外：grade=adjust，issue=incomplete。"
-        "是土地变化，但掩膜明显错位：grade=adjust，issue=shifted。"
+        "分两步。看不出本单定义的变化"
+        "（配准误差、季节、阴影、两期本来一样、"
+        "只是外观或颜色变了但本单要的地物没变）：present=false，grade=wrong。"
+        "能看出本单定义的变化：present=true，不得给 wrong。"
+        "是本单定义的变化，掩膜内没变化的区域比变化本身还大：grade=adjust，issue=oversize。"
+        "是本单定义的变化，但有一大块真变化在掩膜外：grade=adjust，issue=incomplete。"
+        "是本单定义的变化，但掩膜明显错位：grade=adjust，issue=shifted。"
         "掩膜只比变化范围松或紧一圈：grade=fit，issue 为空。"
         "已经罩住变化不算贴合。过大、不完整、错位都不得打成 wrong。"
         '只返回 JSON：{"present":true,"grade":"fit","issue":"","reason":"..."}'
@@ -217,22 +230,34 @@ def mask_components(mask, min_area=MIN_AREA):
 
 
 def crop_window(shape, xyxy, scale=CROP_SCALE):
+    """外扩 scale 倍，按连通域长边裁正方形；贴边时往里挪，能方则方。"""
     h, w = shape[:2]
     x0, y0, x1, y1 = [float(v) for v in xyxy]
     bw = max(1.0, x1 - x0)
     bh = max(1.0, y1 - y0)
+    side = max(bw, bh) * float(scale)
     cx = (x0 + x1) / 2.0
     cy = (y0 + y1) / 2.0
-    nx0 = max(0, int(round(cx - bw * scale / 2.0)))
-    ny0 = max(0, int(round(cy - bh * scale / 2.0)))
-    nx1 = min(w, int(round(cx + bw * scale / 2.0)))
-    ny1 = min(h, int(round(cy + bh * scale / 2.0)))
+    nx0 = int(round(cx - side / 2.0))
+    ny0 = int(round(cy - side / 2.0))
+    side_i = max(1, int(round(side)))
+    if nx0 < 0:
+        nx0 = 0
+    if ny0 < 0:
+        ny0 = 0
+    if nx0 + side_i > w:
+        nx0 = max(0, w - side_i)
+    if ny0 + side_i > h:
+        ny0 = max(0, h - side_i)
+    nx1 = min(w, nx0 + side_i)
+    ny1 = min(h, ny0 + side_i)
     if nx1 <= nx0 or ny1 <= ny0:
         raise ValueError("crop 为空")
     return nx0, ny0, nx1, ny1
 
 
-def paint_mask(bgr, mask_crop, color, alpha=0.15):
+def paint_mask(bgr, mask_crop, color, alpha=0.15, edge=2, halo=4):
+    """halo 是描边前的深色底。发给 Qwen 的图用 edge=1、halo=0，不再加粗。"""
     vis = bgr.copy()
     region = mask_crop.astype(bool)
     if not region.any():
@@ -241,17 +266,32 @@ def paint_mask(bgr, mask_crop, color, alpha=0.15):
     layer[region] = color
     blended = cv2.addWeighted(layer, float(alpha), vis, 1.0 - float(alpha), 0)
     vis[:] = blended
+    if edge <= 0 and halo <= 0:
+        return vis
     contours, _ = cv2.findContours(region.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(vis, contours, -1, (20, 20, 20), 4, lineType=cv2.LINE_AA)
-    cv2.drawContours(vis, contours, -1, color, 2, lineType=cv2.LINE_AA)
+    if halo > 0:
+        cv2.drawContours(vis, contours, -1, (20, 20, 20), int(halo), lineType=cv2.LINE_AA)
+    if edge > 0:
+        cv2.drawContours(vis, contours, -1, color, int(edge), lineType=cv2.LINE_AA)
     return vis
 
 
 def pair_mask_view(before_bgr, after_bgr, comp, color):
     nx0, ny0, nx1, ny1 = crop_window(before_bgr.shape, comp["xyxy"])
-    left = paint_mask(before_bgr[ny0:ny1, nx0:nx1], comp["mask"][ny0:ny1, nx0:nx1], color)
-    right = paint_mask(after_bgr[ny0:ny1, nx0:nx1], comp["mask"][ny0:ny1, nx0:nx1], color)
+    sl = (slice(ny0, ny1), slice(nx0, nx1))
+    left = paint_mask(before_bgr[sl], comp["mask"][sl], color, edge=1, halo=0)
+    right = paint_mask(after_bgr[sl], comp["mask"][sl], color, edge=1, halo=0)
     return stitch(left, right)
+
+
+def pair_vismask_crop(before_bgr, after_bgr, mask, xyxy, color=(0, 0, 255), alpha=0.12, cc_mask=None):
+    """与推理 analysis_crop 相同：只叠当前连通域，再按该块正方形裁、左右拼。"""
+    region = cc_mask if cc_mask is not None else (mask > 0)
+    left_full = paint_mask(before_bgr, region, color, alpha=alpha, edge=1, halo=0)
+    right_full = paint_mask(after_bgr, region, color, alpha=alpha, edge=1, halo=0)
+    nx0, ny0, nx1, ny1 = crop_window(before_bgr.shape, xyxy)
+    sl = (slice(ny0, ny1), slice(nx0, nx1))
+    return stitch(left_full[sl], right_full[sl])
 
 
 def require_task(prompt="", prompt_file="") -> str:
@@ -277,7 +317,7 @@ def cd_locate_prompt(task: str, kind: str = "miss") -> str:
         raise SystemExit(_PROMPT_EMPTY)
     if kind == "adjust":
         focus = (
-            "彩色轮廓是当前要改的这一块变化，内部淡色不是真实地物。"
+            "细线和内部淡色只标出要改的这一块，颜色不是地物特征。"
             "只给一个点，点在这块真实变化的中心。"
             "没有符合本单的变化就返回 {\"miss\":[]}。"
         )

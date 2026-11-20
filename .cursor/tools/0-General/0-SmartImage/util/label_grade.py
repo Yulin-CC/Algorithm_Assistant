@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -34,6 +35,8 @@ from vllm_client import extract_json_object
 from overlay import (
     PALETTE,
     TASK_SLUG,
+    cd_layout,
+    crop_name_for,
     draw_shapes,
     instance_crop_view,
     model_dir,
@@ -342,7 +345,10 @@ def count_grades(items) -> dict:
 
 
 def ask_overlay(client, bgr, prompt: str, model_path: str = "") -> dict:
-    view = write_qwen_view(bgr, path=model_path)
+    if model_path and os.path.isfile(model_path) and bgr is None:
+        view = model_path
+    else:
+        view = write_qwen_view(bgr, path=model_path)
     try:
         raw = client.describe_image(
             view, prompt, system=SYSTEM_QA, max_tokens=256, temperature=0,
@@ -739,8 +745,8 @@ ISSUE_ZH = {"oversize": "过大", "incomplete": "不完整", "shifted": "错位"
 GRADE_RANK = {"wrong": 0, "adjust": 1, "fit": 2}
 
 
-def to_check_dir(dataset_root: str) -> str:
-    return os.path.join(dataset_root, "draft", "to_check")
+def to_check_dir(dataset_root: str, dest="") -> str:
+    return dest or os.path.join(dataset_root, "draft", "to_check")
 
 
 def label_dirname(label) -> str:
@@ -751,12 +757,12 @@ def label_dirname(label) -> str:
     return text or "unknown"
 
 
-def export_to_check(dataset_root, slug, part=None) -> dict:
-    """待查图：检测抄裁图；变化检测抄 vis 整图，一块掩膜一份（同图多块就复制多张）。CD 另抄 fit。"""
+def export_to_check(dataset_root, slug, part=None, jsons_dir="", dest="") -> dict:
+    """待查图：检测抄裁图；变化检测抄 crop。CD 另抄 fit。变化检测 dest 在版本目录，不写 draft。"""
     slug = use_slug(slug)
     if slug != TASK_SLUG:
         return {}
-    folder = qa_jsons_dir(dataset_root, slug, part)
+    folder = jsons_dir or qa_jsons_dir(dataset_root, slug, part)
     grades = ("wrong", "adjust", "fit")
     by_label = {}
     copy_fit = False
@@ -780,16 +786,14 @@ def export_to_check(dataset_root, slug, part=None) -> dict:
                 if grade == "fit" and not pair:
                     continue
                 if pair:
-                    name = model_name_for(stem, item.get("index"))
-                    src = str(item.get("vis") or "")
-                    if not src or not os.path.isfile(src):
-                        src = os.path.join(vis_dir(dataset_root, slug, part), name)
+                    src = str(item.get("model") or item.get("vis") or "")
+                    name = os.path.basename(src) if src else crop_name_for(stem, item.get("index") or 0)
                 else:
                     src = str(item.get("model") or "")
                     name = os.path.basename(src) if src else ""
                 if src and os.path.isfile(src) and name:
                     bucket[grade].append((src, name))
-    root = to_check_dir(dataset_root)
+    root = to_check_dir(dataset_root, dest)
     n_wrong = n_adjust = n_fit = 0
     for label, bucket in by_label.items():
         for grade in grades:
@@ -952,21 +956,41 @@ def ensure_views(dataset_root, slug=None, part=None) -> str:
     return table
 
 
+def _list_stem_crops(crop_dir: str, stem: str):
+    """按 stem_01.jpg 序号列出已有裁图，返回 (0-based index, path)。"""
+    if not crop_dir or not os.path.isdir(crop_dir):
+        return []
+    pat = re.compile(rf"^{re.escape(stem)}_(\d+)\.(?:jpg|jpeg|png)$", re.I)
+    found = []
+    for name in os.listdir(crop_dir):
+        m = pat.match(name)
+        if not m:
+            continue
+        found.append((int(m.group(1)) - 1, os.path.join(crop_dir, name)))
+    found.sort(key=lambda x: x[0])
+    return found
+
+
 def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
                timeout=600, base_url="", model="", slug=None, min_area=32, part=None,
                prompt="", prompt_file=""):
-    """两期 A/B 上核对 png 变化掩膜。不改原图和掩膜。"""
+    """两期 A/B 上核对 png 变化掩膜。不改原图和掩膜。
+
+    小于 min_area 的碎斑不送模型，也不写入档位，不参与整对去留。
+    `--masks` 落在 `repro/<版本>/bcd_map` 时：窗以 `crop/vismask_crop/` 为准，
+    Qwen 看同名 `crop/analysis_crop/`（不叠 GT）；缺 analysis 跳过、不补写。
+    判定写 `analysis/jsons/`，不再写 draft/model、vis、summary.json。
+    """
     from cd_pair import (
-        cd_grade_prompt,
+        resolve_grade_prompt,
         list_pairs,
         mask_components,
         pair_mask_view,
         pair_roots,
         read_bgr,
         read_mask,
-        require_task,
     )
-    grade_prompt = cd_grade_prompt(require_task(prompt, prompt_file) if (prompt or prompt_file) else "")
+    grade_prompt = resolve_grade_prompt(prompt, prompt_file)
 
     slug = use_slug(slug)
     part = str(part or "").strip() or None
@@ -976,6 +1000,11 @@ def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
     mask_dir = resolve_jsons_dir(dataset_root, masks)
     if not os.path.isdir(mask_dir):
         raise SystemExit(f"找不到掩膜目录: {mask_dir}")
+    layout = cd_layout(mask_dir, dataset_root)
+    jsons_dir = layout["jsons"] if layout else qa_jsons_dir(dataset_root, slug, part)
+    crop_dir = layout["crop"] if layout else model_dir(dataset_root, slug, part)
+    vismask_crop_dir = layout["vismask_crop"] if layout else ""
+    use_repro = bool(layout)
     pairs = {stem: (before, after) for stem, before, after in list_pairs(before_dir, after_dir)}
     files = sorted(
         p for p in Path(mask_dir).iterdir()
@@ -983,21 +1012,22 @@ def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
     )
     if limit:
         files = files[: int(limit)]
-    ensure_dir(qa_jsons_dir(dataset_root, slug, part))
-    ensure_dir(model_dir(dataset_root, slug, part))
-    ensure_dir(vis_dir(dataset_root, slug, part))
+    ensure_dir(jsons_dir)
+    ensure_dir(crop_dir)
+    if not use_repro:
+        ensure_dir(vis_dir(dataset_root, slug, part))
 
     pending = []
     skipped = 0
     for path in files:
-        out_p = os.path.join(qa_jsons_dir(dataset_root, slug, part), f"{path.stem}.json")
+        out_p = os.path.join(jsons_dir, f"{path.stem}.json")
         existing = load_json(out_p) if os.path.isfile(out_p) else None
         if not force and existing and existing.get("source") not in {"failed", "placeholder"}:
             skipped += 1
             continue
         pending.append((path, out_p))
     if not pending:
-        table = ensure_views(dataset_root, slug, part)
+        table = "" if use_repro else ensure_views(dataset_root, slug, part)
         print(f"变化掩膜无需质检 skip={skipped}")
         if table:
             print(f"表格 {table}")
@@ -1006,7 +1036,7 @@ def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
     client, model_name = _make_client(base_url, model, timeout)
     print(
         f"change-qa jobs={len(pending)} skip={skipped} masks={len(files)} "
-        f"model={model_name} → {qa_jsons_dir(dataset_root, slug, part)}"
+        f"model={model_name} → {jsons_dir}"
     )
 
     def one(item):
@@ -1026,7 +1056,6 @@ def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
             mask = read_mask(str(path))
             if before.shape[:2] != after.shape[:2] or before.shape[:2] != mask.shape[:2]:
                 raise ValueError("A/B/掩膜尺寸不一致")
-            comps = mask_components(mask, min_area=min_area)
         except Exception as e:
             rec = {
                 "stem": stem, "source": "failed", "error": str(e),
@@ -1035,29 +1064,60 @@ def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
             write_json(out_p, rec)
             return rec
         items = []
-        m_dir = model_dir(dataset_root, slug, part)
-        for i, comp in enumerate(comps):
-            color = PALETTE[i % len(PALETTE)]
-            m_path = os.path.join(m_dir, model_name_for(stem, i))
-            try:
-                drawn = pair_mask_view(before, after, comp, color)
-                verdict = normalize_grade(
-                    ask_overlay(client, drawn, grade_prompt, model_path=m_path),
-                )
-            except Exception as e:
-                verdict = failed_grade(str(e))
-                m_path = ""
-            items.append({
-                "index": i,
-                "label": "change",
-                "shape_type": "mask",
-                "model": m_path,
-                **verdict,
-            })
-        v_dir = vis_dir(dataset_root, slug, part)
-        v_path = save_change_overview(before, after, comps, items, stem, v_dir)
-        for comp, item in zip(comps, items):
-            item["vis"] = save_change_item_view(before, after, comp, item, stem, v_dir)
+        if use_repro:
+            # 窗名单跟 vismask_crop；识图用同名 analysis_crop（无 GT）
+            comps = mask_components(mask, min_area=1219)
+            area_by_i = {i: int(c["area"]) for i, c in enumerate(comps)}
+            window_dir = vismask_crop_dir if (
+                vismask_crop_dir and os.path.isdir(vismask_crop_dir)
+            ) else crop_dir
+            for i, vis_path in _list_stem_crops(window_dir, stem):
+                name = os.path.basename(vis_path)
+                m_path = os.path.join(crop_dir, name)
+                if not os.path.isfile(m_path):
+                    continue
+                try:
+                    verdict = normalize_grade(
+                        ask_overlay(client, None, grade_prompt, model_path=m_path),
+                    )
+                except Exception as e:
+                    verdict = failed_grade(str(e))
+                    m_path = ""
+                items.append({
+                    "index": i,
+                    "label": "change",
+                    "shape_type": "mask",
+                    "model": m_path,
+                    "area": int(area_by_i.get(i, 0)),
+                    **verdict,
+                })
+        else:
+            comps = mask_components(mask, min_area=min_area)
+            for i, comp in enumerate(comps):
+                color = PALETTE[i % len(PALETTE)]
+                m_path = os.path.join(crop_dir, model_name_for(stem, i))
+                try:
+                    drawn = pair_mask_view(before, after, comp, color)
+                    verdict = normalize_grade(
+                        ask_overlay(client, drawn, grade_prompt, model_path=m_path),
+                    )
+                except Exception as e:
+                    verdict = failed_grade(str(e))
+                    m_path = ""
+                items.append({
+                    "index": i,
+                    "label": "change",
+                    "shape_type": "mask",
+                    "model": m_path,
+                    "area": int(comp["area"]),
+                    **verdict,
+                })
+        v_path = ""
+        if not use_repro:
+            v_dir = vis_dir(dataset_root, slug, part)
+            v_path = save_change_overview(before, after, comps, items, stem, v_dir)
+            for comp, item in zip(comps, items):
+                item["vis"] = save_change_item_view(before, after, comp, item, stem, v_dir)
         counts = count_grades(items)
         rec = {
             "stem": stem,
@@ -1090,13 +1150,22 @@ def run_change(dataset_root, masks="label", limit=None, force=False, workers=2,
                 stats["fail"] += 1
             if rec.get("source") == "empty":
                 stats["empty"] += 1
-    table = ensure_views(dataset_root, slug, part)
+    table = "" if use_repro else ensure_views(dataset_root, slug, part)
     summary = {
         **stats, "skip": skipped, "masks": mask_dir, "model": model_name,
-        "model_dir": model_dir(dataset_root, slug, part), "vis_dir": vis_dir(dataset_root, slug, part),
+        "crop": crop_dir if use_repro else model_dir(dataset_root, slug, part),
+        "jsons": jsons_dir,
         "slug": slug, "part": part or "", "pair": True,
     }
-    write_json(summary_path(dataset_root, slug, part), summary)
+    if not use_repro:
+        summary["model_dir"] = model_dir(dataset_root, slug, part)
+        summary["vis_dir"] = vis_dir(dataset_root, slug, part)
+        write_json(summary_path(dataset_root, slug, part), summary)
+    elif slug == TASK_SLUG:
+        export_to_check(
+            dataset_root, slug, part,
+            jsons_dir=jsons_dir, dest=layout["to_check"],
+        )
     print(
         f"change-qa 完成 n={stats['n']} fit={stats['fit']} adjust={stats['adjust']} "
         f"wrong={stats['wrong']} ok={stats['ok']} images={stats['images']}"

@@ -43,7 +43,7 @@ description: >-
     git status -sb
     ```
 
-  - `<gitlab-host>` 取自 `git remote get-url gitlab` 的域名（如 `doc.geoai.com`）。
+  - `<gitlab-host>` 取自 `git remote get-url gitlab` 的域名（如 `gitlab.example.com`）。
 
 ### 2.1 缺少 remote 时
 
@@ -51,7 +51,7 @@ description: >-
 
     ```bash
     git remote add <仓库标识> <远程仓库URL>
-    # 例：git remote add gitlab http://doc.geoai.com:5002/geoai/ai/yoloe.git
+    # 例：git remote add gitlab http://<gitlab-host>:<port>/<group>/<repo>.git
     ```
 
 ### 2.2 缺少凭据时（用户自行写入）
@@ -79,7 +79,7 @@ description: >-
     # echo "https://<GitHub用户名>:<PAT>@github.com" >> ~/.git-credentials
 
     # GitLab 占位符：
-    # echo "https://<平台用户名>:<访问凭据>@doc.geoai.com:5002" >> ~/.git-credentials
+    # echo "https://<平台用户名>:<访问凭据>@<gitlab-host>:<port>" >> ~/.git-credentials
     ```
 
     **步骤 3 — 用户回复「已配置」后**，Agent 执行 §3.4 连通性与 Token 校验；通过后再进入 §3 收集远程信息。

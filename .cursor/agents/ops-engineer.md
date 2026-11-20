@@ -10,7 +10,7 @@ description: >-
   not. listen READY is not proof the work is moving. Use the
   lead AgentID from the dispatch for the room. Do not register your own id,
   train, or spawn another engineer.
-model: cursor-grok-4.6-medium
+model: auto
 ---
 
 # 运维工程师

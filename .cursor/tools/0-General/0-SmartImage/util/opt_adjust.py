@@ -37,10 +37,12 @@ from opt_fill import (
     write_mask_png,
 )
 from overlay import (
+    cd_layout,
     cover_gray,
     model_dir,
     model_name_for,
     qa_jsons_dir,
+    resolve_jsons_dir,
     save_jpg,
     shape_xyxy,
     vis_dir,
@@ -355,7 +357,7 @@ def _keep_point_shapes(row, px, py) -> dict:
 
 
 def run_adjust_change(dataset_root, prompt="", prompt_file="", limit=None,
-                      timeout=600, base_url="", model=""):
+                      timeout=600, base_url="", model="", masks=""):
     """变化检测 adjust：Qwen 重新报点，Triton SAM 出掩膜。不走 GroundingPI。"""
     from cd_pair import cd_locate_prompt, mask_components, read_bgr as read_pair, read_mask, require_task
     from describe import _make_client
@@ -363,7 +365,9 @@ def run_adjust_change(dataset_root, prompt="", prompt_file="", limit=None,
 
     task = require_task(prompt, prompt_file)
     locate_prompt = cd_locate_prompt(task, "adjust")
-    folder = qa_jsons_dir(dataset_root, OVERLAY_SLUG)
+    mask_dir = resolve_jsons_dir(dataset_root, masks) if masks else ""
+    layout = cd_layout(mask_dir, dataset_root) if mask_dir else None
+    folder = layout["jsons"] if layout else qa_jsons_dir(dataset_root, OVERLAY_SLUG)
     if not os.path.isdir(folder):
         raise SystemExit(f"先跑 label_grade.py --masks，找不到 {folder}")
     files = sorted(Path(folder).glob("*.json"))
@@ -405,8 +409,9 @@ def run_adjust_change(dataset_root, prompt="", prompt_file="", limit=None,
                 continue
             comp = comps[index]
             view, gray_left, gray_right, origin = _adjust_view(before, after, mask, comp)
-            m_path = os.path.join(model_dir(dataset_root, ADJUST_SLUG), model_name_for(stem, index))
-            v_path = os.path.join(vis_dir(dataset_root, ADJUST_SLUG), f"{stem}__{index:03d}.jpg")
+            adj_crop = os.path.join(layout["adjust"], "crop") if layout else adjust_crop_dir(dataset_root)
+            m_path = os.path.join(adj_crop, f"{stem}__{index:03d}.jpg")
+            v_path = m_path
             ensure_dir(os.path.dirname(v_path))
             save_jpg(v_path, view)
             verdict = ask_cd(client, view, locate_prompt, m_path)
@@ -444,7 +449,7 @@ def run_adjust_change(dataset_root, prompt="", prompt_file="", limit=None,
                     "issue": item.get("issue") or "",
                 }],
                 CROP_SIDE,
-                adjust_crop_dir(dataset_root),
+                adj_crop,
             )
             crop = packed[0] if packed else {"crop_error": "没有裁图"}
             crop["index"] = index
@@ -463,9 +468,13 @@ def run_adjust_change(dataset_root, prompt="", prompt_file="", limit=None,
     if needs_sam:
         from sam_client import TritonSAM
         sam = TritonSAM()
-    out_dir = qa_jsons_dir(dataset_root, ADJUST_SLUG)
+    if layout:
+        out_dir = os.path.join(layout["adjust"], "jsons")
+        mask_png_dir = os.path.join(layout["adjust"], "masks")
+    else:
+        out_dir = qa_jsons_dir(dataset_root, ADJUST_SLUG)
+        mask_png_dir = os.path.join(task_draft(dataset_root, ADJUST_SLUG), "masks")
     ensure_dir(out_dir)
-    mask_dir = os.path.join(task_draft(dataset_root, ADJUST_SLUG), "masks")
     totals = {"filled": 0, "dropped": 0, "empty": 0, "failed": 0}
     for job in jobs:
         rec, stem = job["rec"], job["stem"]
@@ -505,7 +514,7 @@ def run_adjust_change(dataset_root, prompt="", prompt_file="", limit=None,
         mask = job.get("mask")
         if kept_shapes is not None and kept_shapes and mask is not None:
             mask_out = write_mask_png(
-                os.path.join(mask_dir, f"{stem}.png"), mask.shape[:2], kept_shapes,
+                os.path.join(mask_png_dir, f"{stem}.png"), mask.shape[:2], kept_shapes,
             )
         write_json(os.path.join(out_dir, f"{stem}.json"), {
             "stem": stem,
@@ -558,6 +567,7 @@ if __name__ == "__main__":
             timeout=args.timeout,
             base_url=args.base_url,
             model=args.model,
+            masks=args.masks,
         )
     else:
         if args.shape not in SHAPE_CHOICES:

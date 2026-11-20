@@ -8,7 +8,7 @@ description: >-
   train/eval/infer dispatch lacks 已齐 or 已构建, or the disk disagrees, stop
   and ask the lead. Do not build slots, install the environment, or spawn
   another engineer.
-model: cursor-grok-4.6-medium
+model: auto
 ---
 
 # 模型工程师
@@ -43,5 +43,6 @@ model: cursor-grok-4.6-medium
 
   - 进度：该槽 `todo.md`；需求：该槽 `Customer.md`。YOLOE 这两份写在槽内票目录，不写槽根。
   - 交回组长：槽或票路径、权重/checkpoint、配置、日志、`0-results`；blocked。源码适配另交移植说明路径和依赖包名。写清现象、范围、建议的下一棒工种。坏图坏标签只建议移到同一数据根下的缓存目录（如 `_cache_bad/`），不建议删除。不要写「等用户决定」。
+  - 派工写明归档时：按 `workenv/habits.md`「新版本怎么归档」把训练包拷到备份根下的工程名目录（`checkpoint/` `config/` `vis/` `train.log`）。不编格式。不覆盖已有 `testlog.md`。不把权重另拷进算法仓 `weights/`。备份根以派工为准，缺则停回组长。
   - 下一棒测试：写明版本号、测试集、infer/eval 入口，交给组长派 `test-engineer`。
   - 缺环境或杂活：写入 todo 的 blocked，交回组长。组长派运维装好后再派回。

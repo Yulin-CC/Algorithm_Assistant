@@ -149,8 +149,7 @@ def top_processes(limit: int = 8) -> str:
 
 
 def disk_space(path: str = "") -> str:
-    drive = os.environ.get("SystemDrive") or ""
-    raw = path.strip() if path else ((drive + "/") if os.name == "nt" and drive else "/")
+    raw = path.strip() if path else ("C:/" if os.name == "nt" else "/")
     try:
         target = safe_path(raw) if path.strip() else Path(raw)
         if not target.exists():
