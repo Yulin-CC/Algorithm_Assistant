@@ -5,7 +5,6 @@ description: >-
   /data-engineer. Includes a single-module request: organize, prelabel, 识图,
   mask overlay QA, 改标签, pyramid. Missing env or out-of-role chores go back
   to the lead. Do not install the environment or spawn another engineer.
-model: auto
 ---
 
 # 数据处理工程师

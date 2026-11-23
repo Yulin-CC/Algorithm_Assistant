@@ -6,7 +6,6 @@ description: >-
   user types /test-engineer. Includes a single-module request. Missing
   env or out-of-role chores go back to the lead. Do not install the
   environment or spawn another engineer.
-model: auto
 ---
 
 # 测试工程师
@@ -26,7 +25,7 @@ model: auto
   两条可分开派，也可同一版本都跑。变化检测的命令和落盘以该仓 `0-Agent-demo/SKILL.md` 为准。
 
   - **指标**：只对 `TestSet/1-Testdir`（及其中分场景子目录）里带 GT 的样本。先推理再 eval。精确率、召回、F1 以 eval 为准。禁止拿 `0-Feedback` 算指标。
-  - **可视化**：不需要 GT。`1-Testdir` 和 `0-Feedback` 都做。推理出预测后，`analysis.py --pred <bcd_map>`，**不要加 `--gt`**。Qwen 对预测区域或框定档（`fit` / `adjust` / `wrong`），从 `wrong` 归易误检目标。变化检测材料是该版本 `repro/<版本>/analysis/jsons/` 与 `analysis.json`，裁图在 `crop/analysis_crop/`。已有 json 且不加 `--force` 时不重问。缺结果时会问 Qwen。
+  - **可视化**：不需要 GT。`1-Testdir` 和 `0-Feedback` 都做。推理出预测后，`analysis.py --pred <bcd_map>`，**不要加 `--gt`**。Qwen 对预测区域或框定档（`fit` / `adjust` / `wrong`），从 `wrong` 归易误检目标。变化检测材料是该版本 `repro/<版本>/analysis/jsons/` 与 `analysis.json`，裁图在 `crop/analysis_crop/`。已有 json 且不加 `--force` 时不重问。缺结果时会问 Qwen。**叠图、裁框这类图片产物一律落在该数据集根下的 `repro/<模型名>-<yymmdd>[-<后缀>]/`**（`vis/`、`crops/`），票的 `0-results/` 只留指标与报告。
   - **新版本对比**：测新版本时，上一版用**同一套** Testdir（及本轮点名的 Feedback）再跑一遍。预测目录按版本分开，不覆盖新版产物。指标表并排新旧。可视化也按版本分开定档，结论写变好 / 变差 / 持平。派工没写上一版、或盘上对不上该权重：停回组长，不猜邻近版本，不编 `latest`。用户这轮明说只测新版、或没有上一版，才跳过对照。
   - `label_grade` 挖负样本、改预标：归数据工程师，不在本棒挪 `A/` `B/` 或改正式标注。
   - `tool-gt_rectify`：检测框真/假误检与弱标签。须用户确认后交回组长派数据工程师。变化检测 png 掩膜不套这套。
@@ -63,6 +62,7 @@ model: auto
 ## 6 交接
 
   - 报告：写在对应 `_demo_eval` 槽（或用户指定路径）。有客户票时进度只写该票 `todo.md`。测完还要把同一份 `testlog.md` 放到模型备份目录根上（见第 7 节和第 8 节）。
+  - **可视化落点**：`vis/`、`crops/` 这类图片产物写到该数据集根下的 `repro/<模型名>-<yymmdd>[-<后缀>]/`，不堆在票的 `0-results/`。票 `0-results/` 只放 `testlog.md` 和指标文件。报告里写清 `repro/` 的绝对路径。
   - 交回组长：报告路径、Testdir 指标（若跑了；新版本含上一版对照表）、Feedback 与 Testdir 的可视化模式、建议（下一棒是补数还是改配置/再训）。写清现象、范围、建议的下一棒工种。坏图坏标签只建议移到同一数据根下的缓存目录（如 `_cache_bad/`），不建议删除。不要写「等用户决定」。
   - 缺环境或杂活：写入 todo 的 blocked，交回组长。组长派运维装好后再派回。
   - 报告按下面第 7 节写。不新写模板引擎。不负责把 `checkpoint/` `config/` `vis/` `train.log` 拷进备份根，那是训练归档。
@@ -87,4 +87,4 @@ model: auto
 
 ## 8 模型备份里的报告
 
-  备份根见派工或 `workenv/env-local/docs.md`（备份根由用户给，也可以记在 `workenv/env-local/docs.md`）。目录名与训练工程名相同，样板 `[ChangeDetect]-SAMCD_Building-2611-v1.4`。把第 7 节那份 `testlog.md` 放在该目录根上，不要放进 `checkpoint/`。训练包（`checkpoint/` `config/` `vis/` `train.log`）应已在；缺了交回组长派训练补拷。分析报告可以后补，先不要挡住归档。
+  备份根见派工或 `workenv/env-local/docs.md`。目录名与训练工程名相同，样板 `[ChangeDetect]-SAMCD_Building-2611-v1.4`。把第 7 节那份 `testlog.md` 放在该目录根上，不要放进 `checkpoint/`。训练包（`checkpoint/` `config/` `vis/` `train.log`）应已在；缺了交回组长派训练补拷。分析报告可以后补，先不要挡住归档。

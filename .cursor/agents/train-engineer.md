@@ -8,7 +8,6 @@ description: >-
   train/eval/infer dispatch lacks 已齐 or 已构建, or the disk disagrees, stop
   and ask the lead. Do not build slots, install the environment, or spawn
   another engineer.
-model: auto
 ---
 
 # 模型工程师

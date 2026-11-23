@@ -218,7 +218,7 @@ flowchart TD
 
 ## 👷 5 五名工程师
 
-项目、数据、模型、测试、运维含单模块都由组长派。点名 `/project-engineer`、`/data-engineer`、`/train-engineer`、`/test-engineer`、`/ops-engineer` 直接进该工程师。子代理看不到主对话，交接靠文件。五名工程师默认用 auto（额度紧时临时），派工时不要另指定模型。
+项目、数据、模型、测试、运维含单模块都由组长派。点名 `/project-engineer`、`/data-engineer`、`/train-engineer`、`/test-engineer`、`/ops-engineer` 直接进该工程师。子代理看不到主对话，交接靠文件。五名工程师不钉模型，跟随组长这条对话当前的模型，派工时也不要另指定模型。
 
 | 工程师 | 点名 | 负责 | 交回组长 |
 | --- | --- | --- | --- |

@@ -60,7 +60,7 @@
 
 图像理解、掩膜/框质量判断、漏检补标和 adjust 调整走 `agent-smart_image` → `tools/0-General/0-SmartImage`（不走 DataEngine）。不改原标注。
 
-工程师（`.cursor/agents/`；项目、数据、模型、测试、运维含单模块都由组长派）：`project-engineer` 先对在岗落盘再拆单，盘上已有的（如 `dsample`）不问不挖，执行决策找组长、不逐步问用户；`data-engineer` 数据处理；`train-engineer` 模型（训练、验证、推理；派工写明时做源码适配）；`test-engineer` 测试（Testdir 指标 + Testdir/Feedback 可视化；新版本对照上一版）；`ops-engineer` 项目整理、装环境（`tool-build_env`）、未归类杂活，以及盯这轮工作有没有卡点。`listen` 的 `READY` 不算活已经在往前走。组长之间按项目等活，用 `agents/TeamLeader/room.py`，不另建组长工程师。工程师不进房间，心跳只用派工里的组长 AgentID。五名工程师默认模型是 auto（额度紧时临时），派工时不要另指定模型。
+工程师（`.cursor/agents/`；项目、数据、模型、测试、运维含单模块都由组长派）：`project-engineer` 先对在岗落盘再拆单，盘上已有的（如 `dsample`）不问不挖，执行决策找组长、不逐步问用户；`data-engineer` 数据处理；`train-engineer` 模型（训练、验证、推理；派工写明时做源码适配）；`test-engineer` 测试（Testdir 指标 + Testdir/Feedback 可视化；新版本对照上一版）；`ops-engineer` 项目整理、装环境（`tool-build_env`）、未归类杂活，以及盯这轮工作有没有卡点。`listen` 的 `READY` 不算活已经在往前走。组长之间按项目等活，用 `agents/TeamLeader/room.py`，不另建组长工程师。工程师不进房间，心跳只用派工里的组长 AgentID。五名工程师不钉模型，跟随组长这条对话当前的模型，派工时也不要另指定模型。
 
 ---
 
