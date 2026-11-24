@@ -1,6 +1,6 @@
 # 🔨 环境搭建
 
-怎么把服务装起来。端口、模型名、请求方式看 `services/`。哪台机器用哪个脚本起，看 `workenv/link.md`。
+怎么把服务装起来。端口、模型名、请求方式看 `services/`。哪台机器用哪个脚本起，看 `workarea/link.md`。
 
 **Windows 不起 vLLM / SAM。**这些都装 Linux 服务器上，装之前先看 GPU 和磁盘。
 
@@ -225,7 +225,7 @@ SAM 的启动脚本里有一行 `public_ip="<HOST>"`，换机器后不会自动�
 ## 4 装完要做的三件事
 
 1. 把服务地址写进 `config/vllm_server.json`（vLLM 系）或 `config/sam.json`（Triton 系）。这是程序真正读的地方。
-2. 把这台机器的启动脚本绝对路径和权重目录写进 `workenv/link.md`。
+2. 把这台机器的启动脚本绝对路径和权重目录写进 `workarea/link.md`。
 3. 跑探活，确认通了：
 
 ```bash

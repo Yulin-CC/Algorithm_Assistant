@@ -133,7 +133,7 @@ description: >-
 
 ## 7 项目工单（proj）
 
-  给组长看的执行说明写在 `require/require.md`。`todo.md` 只记勾选。拆单先读 `workenv/habits.md`，只用状态为已确认的条。地图不清就停在 §0，不把「待确认」写进步骤当已定。已确认习惯对得上的，请组长定里写进建议和依据。不改 `habits.md`。
+  给组长看的执行说明写在 `require/require.md`。`todo.md` 只记勾选。拆单先读 `workarea/habits.md`，只用状态为已确认的条。地图不清就停在 §0，不把「待确认」写进步骤当已定。已确认习惯对得上的，请组长定里写进建议和依据。不改 `habits.md`。
 
 ### 7.1 章节（固定顺序）
 
@@ -166,7 +166,7 @@ description: >-
 
   **现在拍板**只写用户层、用人能听懂的话：新数据根从没给过、会新增类别或改这轮要训哪些类、要停别人正在用的卡/进程、工单列表看不懂、从没做过的新类型任务。后步一定要人拍板的，拆单时一次写在这里。不要把房间项目名、内部目录名、张数加总一次丢出去。
 
-  **请组长定**：主机确认列空着但 Data/Project 已确认、vLLM、训练槽、整理落盘子路径、从哪份权重起训。每条写建议和依据（`workenv/habits.md` 里已确认的条、`standard-dataset_merge`、上一张同类票、`HANDOFF`、测试建议）。不要把请组长定抄进给用户那段。
+  **请组长定**：主机确认列空着但 Data/Project 已确认、vLLM、训练槽、整理落盘子路径、从哪份权重起训。每条写建议和依据（`workarea/habits.md` 里已确认的条、`standard-dataset_merge`、上一张同类票、`HANDOFF`、测试建议）。不要把请组长定抄进给用户那段。
 
 ### 7.2.1 问用户
 
@@ -185,7 +185,7 @@ description: >-
 
     # 工单 · 土地负样本挖掘
 
-    来源：用户目标文件。地图：`workenv/env-local/datasets.md` §3.2。
+    来源：用户目标文件。地图：`workarea/env-local/datasets.md` §3.2。
 
     ## 0 核对
 

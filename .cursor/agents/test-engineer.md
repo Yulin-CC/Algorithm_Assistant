@@ -84,4 +84,4 @@ description: >-
 
 ## 8 模型备份里的报告
 
-  备份根见派工或 `workenv/env-local/docs.md`（这台是 `/path/to/models`）。目录名与训练工程名相同，样板 `[ChangeDetect]-SAMCD_Building-2611-v1.4`。把第 7 节那份 `testlog.md` 放在该目录根上，不要放进 `checkpoint/`。训练包（`checkpoint/` `config/` `vis/` `train.log`）应已在；缺了交回组长派训练补拷。分析报告可以后补，先不要挡住归档。
+  备份根见派工或 `workarea/env-local/docs.md`（这台是 `/path/to/models`）。目录名与训练工程名相同，样板 `[ChangeDetect]-SAMCD_Building-2611-v1.4`。把第 7 节那份 `testlog.md` 放在该目录根上，不要放进 `checkpoint/`。训练包（`checkpoint/` `config/` `vis/` `train.log`）应已在；缺了交回组长派训练补拷。分析报告可以后补，先不要挡住归档。

@@ -39,6 +39,6 @@ description: >-
 
   - 进度：该槽 `todo.md`；需求：该槽 `Customer.md`。YOLOE 这两份写在槽内票目录，不写槽根。
   - 交回组长：槽或票路径、权重/checkpoint、配置、日志、`0-results`；blocked、建议的下一棒工种。源码适配另交移植说明路径和依赖包名。坏图坏标签按常驻规则「交接」处理。
-  - 派工写明归档时：按 `workenv/habits.md`「新版本怎么归档」把训练包拷到备份根下的工程名目录（`checkpoint/` `config/` `vis/` `train.log`）。不编格式。不覆盖已有 `testlog.md`。不把权重另拷进算法仓 `weights/`。备份根以派工为准，缺则停回组长。
+  - 派工写明归档时：按 `workarea/habits.md`「新版本怎么归档」把训练包拷到备份根下的工程名目录（`checkpoint/` `config/` `vis/` `train.log`）。不编格式。不覆盖已有 `testlog.md`。不把权重另拷进算法仓 `weights/`。备份根以派工为准，缺则停回组长。
   - 下一棒测试：写明版本号、测试集、infer/eval 入口，交给组长派 `test-engineer`。
   - 缺环境或杂活：写入 todo 的 blocked，按常驻规则「交接」交回组长。

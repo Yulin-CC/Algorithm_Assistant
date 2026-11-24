@@ -123,8 +123,8 @@ description: >-
     ```
 
   **(1)** classify：default vLLM `GET {base_url}/models` 须 2xx。groundingpi：name=`GroundingPI` 须 2xx（不要改用 default Qwen）。segment 另须 SAM `url` TCP 通。同端口多条配置只算实际 `/v1/models` 返回的那一个 model id。
-  **(2)** groundingpi 目标不通：不要换别的 vLLM，不要下模型。先看 `workenv/link.md` 里填写的那台服务器上还有没有别的 vLLM 进程。没填主机就问，不要沿用别的机器。另一台机器上的服务不算这台在用。
-    - 没有其它 vLLM → 按 `workenv/link.md` 的 GroundingPI 启动脚本拉起，复探通过再进叶。
+  **(2)** groundingpi 目标不通：不要换别的 vLLM，不要下模型。先看 `workarea/link.md` 里填写的那台服务器上还有没有别的 vLLM 进程。没填主机就问，不要沿用别的机器。另一台机器上的服务不算这台在用。
+    - 没有其它 vLLM → 按 `workarea/link.md` 的 GroundingPI 启动脚本拉起，复探通过再进叶。
     - 有其它 vLLM → 读 `REPO/server/ledger/runs.md`。正在跑的每一条都是 `by=agent` 且 `user_requested=no` → 不询问，停掉再开 GroundingPI。用户本轮已经在跑这条 GroundingPI 任务（含「连起来 / 标完校验」）→ 占用的 Qwen 也可直接停，不必再问。其它对不上（没记录，或用户点名开着且本轮没授权换掉）→ 暂停，列占用；未确认不得停、不得开。
     - Agent 自己拉起或停掉 vLLM 后立刻改这份台账：`name`、`base_url`、`model`、`script`、时间、`by=agent`、`user_requested`。文件不存在就先建。
   **(3)** classify 目标不通：不自动开服务。其它条目 ok → 列给用户选，未选不得跑。全部不通 → `blocked=服务不可用`，停止。

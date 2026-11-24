@@ -33,7 +33,7 @@
 | `skills/` | 路由、闸门、确认话术、台账 | 不写具体转换/推理代码 |
 | `tools/` 叶 | `.skill` + `util/` 真跑脚本 | 不拷进 customer；Qwen 叶不下权重 |
 | `customer/` | 类名、路径、点位、GoldSet、todo | 不复制 classify/detseg 引擎 |
-| `server/` | 服务表 + HTTP/gRPC 客户端 + probe | 不在本仓库起 vLLM/SAM 进程；不写启动脚本路径（那在 `workenv/link.md`） |
+| `server/` | 服务表 + HTTP/gRPC 客户端 + probe | 不在本仓库起 vLLM/SAM 进程；不写启动脚本路径（那在 `workarea/link.md`） |
 
 约定：
 
@@ -55,7 +55,7 @@
 | `agent-source_adapt` | 把上游一个功能切进指定仓库。派工写明仓库、commit、功能名。不整包升级，不开训。日常三槽仍不改上游。 |
 | `agent-smart_image` | 图像理解、掩膜/框三档质量判断、漏检补标和 adjust 调整。叶子 `0-General/0-SmartImage`。不改原标注。 |
 | `tool-build_env` | 给任意叶配 Python：uv 建 venv → 按需 CUDA/torch → 再装 `PKGS`。conda / 裸 pip 仅备选。 |
-| `tool-remote` | 本机 Windows ↔ 远端 Ubuntu。主机以 `workenv/link.md` 已确认行为准。SSH、上传核对。 |
+| `tool-remote` | 本机 Windows ↔ 远端 Ubuntu。主机以 `workarea/link.md` 已确认行为准。SSH、上传核对。 |
 | `standard-*` | README / 脚本 / skill 写法、数据集合并等规范。给 git 克隆看的项目首页只用 `standard-create_readme_git`，平时 README 仍用 `standard-create_readme`。 |
 
 图像理解、掩膜/框质量判断、漏检补标和 adjust 调整走 `agent-smart_image` → `tools/0-General/0-SmartImage`（不走 DataEngine）。不改原标注。
@@ -177,7 +177,7 @@ customer/<票>/
 
 ## 6 服务（`server/`）
 
-叶子连**已经在跑**的服务，不在本仓库起服务。服务本身（端口、模型名、装法）在 `server/`，启动脚本在哪台机器上、叫什么，在 `workenv/link.md`。
+叶子连**已经在跑**的服务，不在本仓库起服务。服务本身（端口、模型名、装法）在 `server/`，启动脚本在哪台机器上、叫什么，在 `workarea/link.md`。
 
 | 路径 | 功能 |
 | --- | --- |

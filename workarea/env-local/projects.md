@@ -62,5 +62,5 @@
 | 路径 | 备注 |
 | --- | --- |
 | `Agent-DEMO` | `README.md`、`pyproject.toml`。目录 `data`、`serve`、`src`、`z-other` |
-| `Algorithm_Assistant` | 就是这份助手。目录 `.cursor`、`workenv`、`_tmp` |
+| `Algorithm_Assistant` | 就是这份助手。目录 `.cursor`、`workarea`、`_tmp` |
 | `Space_solar` | 空目录 |

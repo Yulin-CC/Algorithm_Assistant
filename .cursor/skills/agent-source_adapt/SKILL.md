@@ -46,7 +46,7 @@ description: >-
 ## 3 冒烟
 
   - 代码接上之后只跑一张图，确认功能读得通，原入口仍能 import。
-  - 要操作服务器时先 Read `workenv/link.md`。同一台机器已有人占 GPU 时，冒烟用 CPU，或等对方 `done`。改仓库树之前先在组长房间 `say`。
+  - 要操作服务器时先 Read `workarea/link.md`。同一台机器已有人占 GPU 时，冒烟用 CPU，或等对方 `done`。改仓库树之前先在组长房间 `say`。
   - 不开训，不占别人的端口。
 
 ---

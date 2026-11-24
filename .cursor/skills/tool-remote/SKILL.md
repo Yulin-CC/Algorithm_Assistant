@@ -2,21 +2,21 @@
 name: remote-106-75-214-73
 description: >-
   Operate local Windows against remote Ubuntu via SSH key / BatchMode.
-  Default host is whatever workenv/link.md records for this checkout, currently
+  Default host is whatever workarea/link.md records for this checkout, currently
   ubuntu@<HOST>. Directory map, vLLM/SAM URLs and start scripts live in
-  workenv/link.md — read that first for server ops. A new
-  environment runs init, writes workenv/link.md, then updates this skill's Server IDs. Use when
+  workarea/link.md — read that first for server ops. A new
+  environment runs init, writes workarea/link.md, then updates this skill's Server IDs. Use when
   the user mentions <HOST>, 操作服务器, vLLM,
   上传数据, local↔remote transfer, or another SSH host.
 ---
 
 # Remote `<HOST>`
 
-本机 ↔ 远端 Ubuntu 的操作策略。主机以 `workenv/link.md` 为准；新环境先走初始化，把主机写进 `workenv/link.md`，再改下面的 Server IDs。当前这份填写是 `ubuntu@<HOST>`。用户指定**其它主机**做上传/下载时，先走 [New server] 做密钥校验并登记 Server ID。后续可追加路径约定；当前先固化**数据传输**。
+本机 ↔ 远端 Ubuntu 的操作策略。主机以 `workarea/link.md` 为准；新环境先走初始化，把主机写进 `workarea/link.md`，再改下面的 Server IDs。当前这份填写是 `ubuntu@<HOST>`。用户指定**其它主机**做上传/下载时，先走 [New server] 做密钥校验并登记 Server ID。后续可追加路径约定；当前先固化**数据传输**。
 
 ## Server IDs
 
-已登记、可用密钥直连的主机。默认只用表中第一行。`workenv/link.md` 该行确认列还是待确认时，本表不算用户已经点头。初始化里用户点头之后再改本表。
+已登记、可用密钥直连的主机。默认只用表中第一行。`workarea/link.md` 该行确认列还是待确认时，本表不算用户已经点头。初始化里用户点头之后再改本表。
 
 | ID | SSH | 备注 |
 | --- | --- | --- |
@@ -159,7 +159,7 @@ print(len(imgs), len(js), len(imgs-js), len(js-imgs))
 
 ## Known roots（草稿，可后续扩展）
 
-本机草稿。没写进 `workenv/link.md`、或确认列还是待确认的，不要沿用到别的机器。
+本机草稿。没写进 `workarea/link.md`、或确认列还是待确认的，不要沿用到别的机器。
 
 | 角色 | 路径 |
 |------|------|
