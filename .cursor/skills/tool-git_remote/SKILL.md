@@ -43,7 +43,7 @@ description: >-
     git status -sb
     ```
 
-  - `<gitlab-host>` 取自 `git remote get-url gitlab` 的域名（如 `gitlab.example.com`）。
+  - `<gitlab-host>` 取自 `git remote get-url gitlab` 的域名（如 `doc.geoai.com`）。
 
 ### 2.1 缺少 remote 时
 
@@ -51,7 +51,7 @@ description: >-
 
     ```bash
     git remote add <仓库标识> <远程仓库URL>
-    # 例：git remote add gitlab http://<gitlab-host>:<port>/<group>/<repo>.git
+    # 例：git remote add gitlab http://doc.geoai.com:5002/geoai/ai/yoloe.git
     ```
 
 ### 2.2 缺少凭据时（用户自行写入）
@@ -79,7 +79,7 @@ description: >-
     # echo "https://<GitHub用户名>:<PAT>@github.com" >> ~/.git-credentials
 
     # GitLab 占位符：
-    # echo "https://<平台用户名>:<访问凭据>@<gitlab-host>:<port>" >> ~/.git-credentials
+    # echo "https://<平台用户名>:<访问凭据>@doc.geoai.com:5002" >> ~/.git-credentials
     ```
 
     **步骤 3 — 用户回复「已配置」后**，Agent 执行 §3.4 连通性与 Token 校验；通过后再进入 §3 收集远程信息。
@@ -157,10 +157,10 @@ description: >-
 
     | 类型 | 工作区（保留） | Git 中写成 |
     | ---- | -------------- | ---------- |
-    | conda | `source /path/to/miniconda3/etc/profile.d/conda.sh` | `source /path/to/miniconda3/etc/profile.d/conda.sh` |
-    | 脚本数据路径 | `dataset="/path/to/dataset"` | `dataset="/path/to/dataset"` |
-    | 其它本机路径 | `/path/to/...` | `/path/to/...` |
-    | IP / 服务地址 | `http://<ip>:8081/v1` | `http://<ip>:8081/v1` |
+    | conda | `source /path/to/home/miniconda3/etc/profile.d/conda.sh` | `source /path/to/miniconda3/etc/profile.d/conda.sh` |
+    | 脚本数据路径 | `dataset="/path/to/home/0-data/..."` | `dataset="/path/to/dataset"` |
+    | 其它本机路径 | `/path/to/home/...`、`/data/...`、`Z:\...` | `/path/to/...` |
+    | IP / 服务地址 | `http://192.168.1.10:8081/v1` | `http://<ip>:8081/v1` |
     | Token / Key | 真实密钥字符串 | `<token>` 或 `<api-key>` |
     | 密码 | 真实密码 | `<password>` |
 
@@ -172,7 +172,7 @@ description: >-
     mkdir -p "$backup/$(dirname "$file")"
     cp "$file" "$backup/$file"
     # 1. 工作区暂时改成占位符（只改命中处，其余不动）
-    #    sed -i 's#<本机路径>#/path/to/miniconda3#g' "$file"
+    #    sed -i 's#/path/to/home/miniconda3#/path/to/miniconda3#g' "$file"
     # 2. 这一版写入 index
     git add -- "$file"
     # 3. 立刻恢复工作区。commit 读 index，磁盘回到本机原值

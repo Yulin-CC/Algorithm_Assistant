@@ -44,7 +44,7 @@ description: >-
 
   **(5)** 检查是否已符合目标规范：
 
-  - **a** 查找工具目录：默认 `/path/to/...`；不存在或功能不足时询问用户工具路径。
+  - **a** 查找工具目录：默认 `/path/to/home/1-project/1-PROCESS`；不存在或功能不足时询问用户工具路径。
   - **b** 调用 [3 工具索引] 中对应脚本逐一调整，后台监督执行。
   - **c** 完成后由 Agent 按对应规范的 **检查流程**（§4.1.2 / §4.2.1 / §4.2.2 / §4.3.2 / §4.4.2）做最终核对，向用户报告并打印数据集统计（文件数、train/val 划分等）。
 
@@ -87,7 +87,7 @@ description: >-
     ```bash
     source "$(conda info --base)/etc/profile.d/conda.sh"
     conda activate yoloe
-    python /path/to/... \
+    python /path/to/home/1-project/1-PROCESS/tools/grounding_generate_cache.py \
       --json-path /path/to/train_segm.json \
       --img-path /path/to/images
     ```

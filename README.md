@@ -64,8 +64,8 @@ Agent 会询问你以下相关事项
 
 1. **写地图** —— 按你给的根展开 `workenv/env-local/`。数据按「到数据集」停，项目只到仓库一层。
 2. **探服务器** —— 要连服务器时先做密钥探测，用 `BatchMode`，**不向你要密码**。`link.md` 的确认列还是「待确认」时，不把它当成你已经点头。
-3. **请你过一眼** —— 把 `workenv/README.md` 摊开给你看，等你点头。点头之后，才把 `link.md` 里的 URL 写回两个 json。
-4. **探服务** —— 在 `.cursor` 下跑 `py -3 model/util/probe.py`，按条记进 `workenv/API-server.md`。没起来的只登记、不擅自搭，**Windows 不起 vLLM / SAM**。
+3. **请你过一眼** —— 把 `workenv/README.md` 摊开给你看，等你点头。点头之后，才把 `link.md` 里的启动脚本写进 `.cursor/server/ledger/runs.md`。
+4. **探服务** —— 在 `.cursor` 下跑 `py -3 server/util/probe.py`，按条记进 `server/README.md` 与 `server/services/`。没起来的只登记、不擅自搭，**Windows 不起 vLLM / SAM**。服务固定是 Qwen / GroundingPI / Triton SAM 那几个，初始化只更新端口、API 和现状，不动 `server/env_building.md`。
 5. **最后问两项** —— 要不要顺手整理某个算法仓、缺的服务现在搭不搭。**说「先不做」就跳过，跳过同样算完成。**
 
 ### 0.3 怎么算初始化好了
@@ -74,7 +74,7 @@ Agent 会询问你以下相关事项
 
 > 嗨！初次见面，我是你的算法助手！...
 
-看到这句，就说明地图已经按你的确认落盘，调用地址也写回了两个 json。**服务没全部探通也算成功**，缺的留在 `workenv/API-server.md`，不挡开工；以后想搭再喊一声。
+看到这句，就说明地图已经按你的确认落盘，服务地址也写进了 `.cursor/server/config/`。**服务没全部探通也算成功**，缺的记在 `server/ledger/runs.md`，不挡开工；以后想搭再喊一声。
 
 ### 0.4 初始化完能直接说什么
 
@@ -89,7 +89,7 @@ Agent 会询问你以下相关事项
 | 「测一下这个权重」 | 测试工程师出报告和误漏检清单，并建议下一棒补数还是改配 | `draft/analysis/` |
 | 「按这个目标文件拆任务」 | 项目工程师对一下盘上已有的，再出工单。点头后才按步骤派 | `.cursor/customer/proj-<日期>-<名>/` |
 | 「客户任务」 | 开一张客户票，之后的进度只写这张票 | `.cursor/customer/<票>/todo.md` |
-| 「服务都通不通」 | 跑一遍探活，按条说明哪里不通、会影响哪块 | `workenv/API-server.md` |
+| 「服务都通不通」 | 跑一遍探活，按条说明哪里不通、会影响哪块 | `.cursor/server/` |
 
 ---
 
@@ -101,17 +101,15 @@ Agent 会询问你以下相关事项
 ./
 ├── README.md                         # 本文件
 ├── workenv/                          # 工作地图。克隆下来是待确认
-│   ├── require.md                    # 初始化脚本
-│   ├── link.md                       # 主机、目录、启动脚本、URL
+│   ├── link.md                       # 主机、目录、启动脚本、权重目录
 │   ├── habits.md                     # 个人习惯画像：已确认的长期偏好
-│   ├── API-server.md                 # 探活和自搭建说明
 │   └── env-local/                    # 本机数据根、项目根、文档
 └── .cursor/
     ├── rules/                        # 常驻规则
     ├── skills/                       # 何时唤起、怎么确认
     ├── agents/                       # 五名工程师；TeamLeader 是组长房间
     ├── tools/                        # 叶子脚本
-    ├── model/                        # vLLM / SAM 客户端和地址
+    ├── server/                       # 服务端口、模型名、装法、台账
     └── customer/                     # 客户票。本快照不含，开票后才有
 ```
 

@@ -2,7 +2,7 @@
 # @Author: Yullin
 # @Date: 2026-09-11
 # @Description: 探测 vLLM /models 与 SAM TCP 端口；不下模型
-# @Command: python model/util/probe.py
+# @Command: python server/util/probe.py
 """
 
 from __future__ import annotations

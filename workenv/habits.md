@@ -83,11 +83,20 @@
 
 ## 交付与文档
 
+### 可视化结果放哪
+
+- 场景：推理或测试出了叠图、裁框这类可视化
+- 习惯：可视化落到数据集所在目录的 `repro/` 下，不堆在 Agent 工作区
+- 默认行为：Agent 工作区（`0-Agent-demo/<槽>/<票>/0-results/`）只放指标结果文件和报告；`vis/`、`crops/` 等图片产物写到该数据集根下的 `repro/<模型名或工程名>/`，一套模型一个目录
+- 例外：用户这轮指定别的落点
+- 来源：明确要求
+- 状态：已确认
+
 ### 新版本怎么归档
 
 - 场景：训完或测完要把模型备份到本机
-- 习惯：按已有那套目录拷，不另发明格式。样板是 `[ChangeDetect]-SAMCD_Building-2611-v1.4`
-- 默认行为：备份根用户给，记在 `env-local/docs.md`。工程名目录里放 `checkpoint/`（`best.pth`、`checkpoint_last.pth`、events、`results.txt`、命名好的 onnx）、`config/`、`vis/`、`train.log`。训练工程师拷训练包；测试工程师把 `testlog.md` 写在该目录根上，分析报告可以后补。不把权重单独丢进算法仓 `weights/`
+- 习惯：按已有那套目录拷，不另发明格式。样板是 `/path/to/models\[ChangeDetect]-SAMCD_Building-2611-v1.4`
+- 默认行为：备份根用户给（这台已用 `/path/to/models`）。工程名目录里放 `checkpoint/`（`best.pth`、`checkpoint_last.pth`、events、`results.txt`、命名好的 onnx）、`config/`、`vis/`、`train.log`。训练工程师拷训练包；测试工程师把 `testlog.md` 写在该目录根上，分析报告可以后补。不把权重单独丢进算法仓 `weights/`
 - 例外：用户这轮指定别的备份根或只要权重
 - 来源：明确要求
 - 状态：已确认

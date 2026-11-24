@@ -2,7 +2,7 @@
 # @Author: Yullin
 # @Date: 2026-10-21
 # @Description: 裁检测框到 img_crop/<类名>/，人工挪文件夹后回写 LabelMe json 或 YOLO txt
-# @Command: python util/BoxCrop_cls.py --Path /path/to/... --status crop --format auto
+# @Command: python util/BoxCrop_cls.py --Path /data/set --status crop --format auto
 """
 
 import argparse

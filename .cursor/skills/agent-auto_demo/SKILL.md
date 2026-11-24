@@ -293,7 +293,7 @@ description: >-
 
   - **入口**：优先 `0-QuickStart/1-predict.sh` / `1-inference.sh` 或 `scripts/inference.py`。
   - **规格**：`customer/` 随任务（问法表、类别表、整目录均可）。
-  - **产物**：可视化目录由用户确认；json / 日志进 `logs/`；对照表进 `0-results/`。
+  - **产物**：可视化写到**该数据集根下的 `repro/<模型名>-<yymmdd>[-<后缀>]/`**（`vis/`、`crops/` 等），不要堆在票的 `0-results/`。票 `0-results/` 只放指标、对照表和报告。json / 日志进 `logs/`。
   - **注意**：阈值、提示词不是全局默认，写在 Customer 或 `customer/`。
 
 ---

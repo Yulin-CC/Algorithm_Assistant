@@ -114,7 +114,7 @@ description: >-
 
 ## 3 备选：conda（仅 uv 不可用，或用户点名已有 conda env）
 
-  先向用户确认 env 名；**禁止**默认沿用仓库里的旧名。
+  先向用户确认 env 名；**禁止**默认 `yulin` / 任何仓库里的旧名。
 
     ```bash
     conda create -n "<env>" python=3.12 -y    # 沿用已有则跳过

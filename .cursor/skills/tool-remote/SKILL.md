@@ -1,17 +1,18 @@
 ---
-name: tool-remote
+name: remote-106-75-214-73
 description: >-
   Operate local Windows against remote Ubuntu via SSH key / BatchMode.
-  Default host is whatever workenv/link.md records for this checkout after
-  the user confirms it. Directory map, vLLM/SAM URLs and start scripts live in
+  Default host is whatever workenv/link.md records for this checkout, currently
+  ubuntu@<HOST>. Directory map, vLLM/SAM URLs and start scripts live in
   workenv/link.md — read that first for server ops. A new
   environment runs init, writes workenv/link.md, then updates this skill's Server IDs. Use when
-  the user mentions 操作服务器, vLLM, 上传数据, local↔remote transfer, or an SSH host.
+  the user mentions <HOST>, 操作服务器, vLLM,
+  上传数据, local↔remote transfer, or another SSH host.
 ---
 
-# Remote
+# Remote `<HOST>`
 
-本机 ↔ 远端 Ubuntu 的操作策略。主机以 `workenv/link.md` 为准；新环境先走初始化，把主机写进 `workenv/link.md`，再改下面的 Server IDs。当前这份还没有已确认的主机。用户指定上传/下载目标时，先看确认列；未确认或不是表中主机，走 [New server] 做密钥校验并登记 Server ID。后续可追加路径约定；当前先固化**数据传输**。
+本机 ↔ 远端 Ubuntu 的操作策略。主机以 `workenv/link.md` 为准；新环境先走初始化，把主机写进 `workenv/link.md`，再改下面的 Server IDs。当前这份填写是 `ubuntu@<HOST>`。用户指定**其它主机**做上传/下载时，先走 [New server] 做密钥校验并登记 Server ID。后续可追加路径约定；当前先固化**数据传输**。
 
 ## Server IDs
 
@@ -19,11 +20,12 @@ description: >-
 
 | ID | SSH | 备注 |
 | --- | --- | --- |
-| `<host>` | `<user>@<host>` | 初始化确认后填写。未确认不算点头 |
+| `<HOST>` | `ubuntu@<HOST>` | 默认 |
+| `<HOST>` | `caiyulin@<HOST>` | 4x3090。驱动 550.90 / CUDA 12.4。不是默认 |
 
 ## New server
 
-用户指定的上传/下载目标**不是**已确认的默认主机时：**先测密钥连通，再传文件**。未通过不得 `scp` / 管道上传。
+用户指定的上传/下载目标**不是** `ubuntu@<HOST>` 时：**先测密钥连通，再传文件**。未通过不得 `scp` / 管道上传。
 
 **(1)** 探测（`BatchMode=yes`，禁止交互要密码）：
 
@@ -31,7 +33,7 @@ description: >-
 ssh -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new <user@host> "echo OK && hostname && whoami"
 ```
 
-- 成功（远端回 `OK`）→ 把该主机追加进上方 **Server IDs**（`ID` = 主机地址或用户给的短名，`SSH` = `user@host`），再按后文传输（把示例里的 `ubuntu@<ip>` 换成新 ID）。
+- 成功（远端回 `OK`）→ 把该主机追加进上方 **Server IDs**（`ID` = 主机地址或用户给的短名，`SSH` = `user@host`），再按后文传输（把示例里的 `ubuntu@<HOST>` 换成新 ID）。
 - 失败 → **停止传输**，进入 **(2)**，不得改用密码登录代传。
 
 **(2)** 无密钥：引导用户做密钥匹配。Agent **不得**索要/代输密码，**不得**读取或回显私钥。
@@ -63,7 +65,7 @@ type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh <user@host> "mkdir -p ~/.ssh && 
 ## Connection
 
 ```bash
-ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<ip> "<cmd>"
+ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<HOST> "<cmd>"
 ```
 
 长传加保活：
@@ -73,11 +75,11 @@ ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<ip> "<cmd>"
 ```
 
 - 默认主机已配置密钥，**不要**交互输密码
-- 非默认主机先走 [New server]，通过后再把上面的 `ubuntu@<ip>` 换成新 ID
+- 非默认主机先走 [New server]，通过后再把上面的 `ubuntu@<HOST>` 换成新 ID
 - Windows PowerShell 下远程命令用单引号包住整段。不要在双引号里写 `\"`，竖线会被拆开。避免 `$(...)` 被本地展开
 
 ```powershell
-ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<ip> 'echo OK && hostname && whoami'
+ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<HOST> 'echo OK && hostname && whoami'
 ```
 
 ## Disk rule（强制）
@@ -88,7 +90,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<ip> 'echo OK && hostname && wh
 2. 确认完整后立刻删临时包（本地 + 远端）
 3. 大体量（本地放不下整包）→ 用**方案 B 流式**，禁止先打满盘的本地大包
 
-**禁止**：未经用户明确同意，移动/删除/改写团队备份目录。
+**禁止**：未经用户明确同意，移动/删除/改写 `Y:\算法样本库\`（团队备份）。
 
 ## Upload strategies
 
@@ -114,7 +116,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<ip> 'echo OK && hostname && wh
 # Windows cmd 管道示例（JPEG 已压缩：用 -cf 即可，别盲目 -czf）
 tar -cf - -C "<中文源目录>" images jsons train.txt ^
 | ssh -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=120 ^
-    ubuntu@<ip> "mkdir -p '<远端英文目录>' && tar -xf - -C '<远端英文目录>'"
+    ubuntu@<HOST> "mkdir -p '<远端英文目录>' && tar -xf - -C '<远端英文目录>'"
 ```
 
 PowerShell 注意：二进制管道优先走 `cmd /c "tar ... | ssh ..."`，减少 PS 管道捣乱。
@@ -157,7 +159,18 @@ print(len(imgs), len(js), len(imgs-js), len(js-imgs))
 
 ## Known roots（草稿，可后续扩展）
 
-以 `workenv/link.md` 已确认行为准。这里不写具体路径。没确认的不要沿用到别的机器。
+本机草稿。没写进 `workenv/link.md`、或确认列还是待确认的，不要沿用到别的机器。
+
+| 角色 | 路径 |
+|------|------|
+| SSH | 见 [Server IDs]；默认 `ubuntu@<HOST>` |
+| 远端安防 | `/path/to/home/0-data/2-DroneObject/SmartSecurity` |
+| 远端水务 | `/path/to/home/0-data/2-DroneObject/SmartWaterarea` |
+| 本地安防 train | `/path/to/data\2-DroneObject\toclean\YOLO-base\智慧安防\train-训练集` |
+| 本地水务 train | `/path/to/data\2-DroneObject\toclean\YOLO-base\智慧水务\train-训练集` |
+| 本地临时包 | `/path/to/data\2-DroneObject\toclean\YOLO-base\_upload_tmp\` |
+
+路径映射细则、更多业务策略 → 以后再往本 skill 追加章节即可。
 
 ## Checklist（每个数据集）
 

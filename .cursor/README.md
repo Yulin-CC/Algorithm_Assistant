@@ -7,7 +7,7 @@
 - [3 通用工具（`0-General`）](#3-通用工具0-general)
 - [4 数据引擎（`1-DataEngine`）](#4-数据引擎1-dataengine)
 - [5 客户票（`customer/`）](#5-客户票customer)
-- [6 模型服务（`model/`）](#6-模型服务model)
+- [6 模型服务（`server/`）](#6-模型服务server)
 - [附录 A 真沙箱（暂未接入）](#附录-a-真沙箱暂未接入)
 - [附录 B 换机：让 Cursor 看见技能](#附录-b-换机让-cursor-看见技能)
 
@@ -21,7 +21,7 @@
 ├── skills/                       # 何时唤起、怎么确认、怎么探服务
 ├── agents/                       # 工程师 .md；TeamLeader/ 是组长房间，不是新工种
 ├── customer/                     # 某一单：工单 + 进度，不复制引擎
-├── model/                        # vLLM / SAM 的地址与客户端
+├── server/                       # 服务：端口、模型名、装法、客户端、台账
 ├── tools/
 │   ├── 0-General/                # 本机手眼：状态、文件、识图
 │   └── 1-DataEngine/             # 产线：整理、分类、检测/分割预标
@@ -33,14 +33,14 @@
 | `skills/` | 路由、闸门、确认话术、台账 | 不写具体转换/推理代码 |
 | `tools/` 叶 | `.skill` + `util/` 真跑脚本 | 不拷进 customer；Qwen 叶不下权重 |
 | `customer/` | 类名、路径、点位、GoldSet、todo | 不复制 classify/detseg 引擎 |
-| `model/` | 服务表 + HTTP/gRPC 客户端 + probe | 不在本仓库起 vLLM/SAM 进程 |
+| `server/` | 服务表 + HTTP/gRPC 客户端 + probe | 不在本仓库起 vLLM/SAM 进程；不写启动脚本路径（那在 `workenv/link.md`） |
 
 约定：
 
 - 数据根目录必须用户给，禁止猜盘。
 - 预标 / 分类只写 `draft/`、`jsons-det-pre` 等；正式 `jsons/` / `labels/` 要用户另开 **整理** 或合并。
 - 有客户票时进度只写该票 `todo.md`，不要在数据集 `draft/todo-*.md` 再写一份。
-- 未经同意不要动团队备份目录。
+- 未经同意不要动 `Y:\算法样本库\`。
 
 ---
 
@@ -68,7 +68,7 @@
 
 ### 3.1 图像理解 · `0-SmartImage`
 
-调度技能 `agent-smart_image`。服务读 `model/config/vllm_server.json` 的 default（当前 Qwen3.8-27B / 8081）；不下 Qwen 权重。DetSeg 的 `--gate` 不是入口。
+调度技能 `agent-smart_image`。服务读 `server/config/vllm_server.json` 的 default（当前 Qwen3.8-27B / 8081）；不下 Qwen 权重。DetSeg 的 `--gate` 不是入口。
 
 | # | 能力 | 落点 | 状态 |
 | --- | --- | --- | --- |
@@ -88,11 +88,11 @@
 | `util/run.py` | 在允许路径内跑 `.py` / `.sh`，超时并截断输出 |
 | `util/paths.py` | **路径白名单**（不是容器沙箱） |
 
-默认允许根：家目录、临时目录、已存在的本机数据根 / 项目根 / 文档根、`/tmp`。再加 `LOCALMACHINE_ROOTS`。
+默认允许根：家目录、临时目录、已存在的 `D:/0-data` `D:/1-project` `D:/4-docs` `/path/to/home` `/path/to/home` `/tmp`。再加 `LOCALMACHINE_ROOTS`。
 
 ```bash
 python tools/0-General/1-LocalMachine/util/system.py gpu
-python tools/0-General/1-LocalMachine/util/files.py ls "/path/to/data"
+python tools/0-General/1-LocalMachine/util/files.py ls "D:/0-data"
 ```
 
 ---
@@ -174,17 +174,21 @@ customer/<票>/
 
 ---
 
-## 6 模型服务（`model/`）
+## 6 服务（`server/`）
 
-叶子连**已经在跑**的服务，不在本仓库起服务。
+叶子连**已经在跑**的服务，不在本仓库起服务。服务本身（端口、模型名、装法）在 `server/`，启动脚本在哪台机器上、叫什么，在 `workenv/link.md`。
 
-| 文件 | 功能 |
+| 路径 | 功能 |
 | --- | --- |
-| `config/vllm_server.json` | 多路 vLLM。地址和模型名以这个文件为准，主机以 `workenv/link.md` 为准。`default: true` 是分类和识图用的 Qwen。GroundingPI 不是默认。FP8 不是默认 |
-| `config/sam.json` | Triton SAM。地址以这个文件的 `url` 为准。另一台容器不作为默认 |
-| `util/vllm_client.py` / `groundingpi_client.py` / `sam_client.py` | OpenAI 兼容 chat、GroundingPI、SAM gRPC |
-| `util/probe.py` | 调度侧探活（`--skip-sam` 只探 vLLM） |
-| `util/servers_io.py` | 读配置、解析 default |
+| `server/README.md` | 服务总表与边界说明 |
+| `server/services/*.md` | 一服务一篇：端口、模型名、请求注意点 |
+| `server/env_building.md` | 装法、依赖、镜像、已知坑 |
+| `server/config/vllm_server.json` | 多路 vLLM。地址和模型名以这个文件为准。`default: true` 是分类和识图用的 Qwen。GroundingPI 不是默认。FP8 不是默认 |
+| `server/config/sam.json` | Triton SAM。地址以这个文件的 `url` 为准。另一台容器不作为默认 |
+| `server/util/vllm_client.py` / `groundingpi_client.py` / `sam_client.py` | OpenAI 兼容 chat、GroundingPI、SAM gRPC |
+| `server/util/probe.py` | 调度侧探活（`--skip-sam` 只探 vLLM） |
+| `server/util/servers_io.py` | 读配置、解析 default |
+| `server/ledger/runs.md` | 起停台账：谁何时起了哪个服务、PID、日志 |
 
 分类、识图、误检过滤探 default vLLM。GroundingPI 检测/分割探 name=`GroundingPI`，不要改用 default Qwen；分割再探 `sam.json` 的 TCP。organize / yolo26 / sam3 不探 vLLM。
 
@@ -201,7 +205,7 @@ customer/<票>/
 | AgentScope Runtime Sandbox | 代码 / 浏览器 / 文件系统隔离；Docker 或阿里云 AgentRun | https://runtime.agentscope.io/zh/sandbox/sandbox_service.html |
 | AIO Sandbox（All-In-One） | 代码解释器 + 无头浏览器；REST / MCP；云上对应阿里云函数计算 | https://github.com/agent-infra/sandbox |
 
-**状态：未接入。** 本机数据根的产线继续只用白名单。
+**状态：未接入。** 本机改 `/path/to/data` 的产线继续只用白名单。
 
 ---
 

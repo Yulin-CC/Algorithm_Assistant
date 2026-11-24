@@ -37,8 +37,8 @@ disable-model-invocation: true
     ```
 
     不写正式 `labels/`，不把 `result/` 挪到数据集根，不删 `draft/`。
-  - **服务**：vLLM `model/config/vllm_server.json`。联通检查由 **总调度** 先做（`--skip-sam`）。本叶不再探测、**不下任何权重**。
-  - **共享客户端**：`REPO/model/util/`（`vllm_client.py` / `common.py`）。
+  - **服务**：vLLM `server/config/vllm_server.json`。联通检查由 **总调度** 先做（`--skip-sam`）。本叶不再探测、**不下任何权重**。
+  - **共享客户端**：`REPO/server/util/`（`vllm_client.py` / `common.py`）。
   - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，临时 venv slug=`classify-qwen`，`PKGS=tqdm`。Windows 控制台 `PYTHONUTF8=1`。
   - **不做**：不写 `labels/`、不调 SAM、不训练、不下载 Qwen 权重。不执行 `uv cache clean` / `pip uninstall`。
 
@@ -131,8 +131,8 @@ disable-model-invocation: true
   | 分类 | 工具路径 | 用途 |
   | --- | --- | --- |
   | 入口 | `util/classify.py` | sample / review / knowledge / run / hold / deliver |
-  | 共享 | `model/util/` | vLLM / 扫图 |
-  | 服务 | `model/config/vllm_server.json` | vLLM；`default: true` |
-  | 探测 | `model/util/probe.py --skip-sam` | 总调度用；本叶不重复 |
+  | 共享 | `server/util/` | vLLM / 扫图 |
+  | 服务 | `server/config/vllm_server.json` | vLLM；`default: true` |
+  | 探测 | `server/util/probe.py --skip-sam` | 总调度用；本叶不重复 |
 
 ---

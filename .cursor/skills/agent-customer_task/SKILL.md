@@ -68,7 +68,7 @@ description: >-
     ```yaml
     ---
     leaf: tools/1-DataEngine/1-Image-Classify/qwen
-    data_root: /path/to/data
+    data_root: D:\path\to\data
     images: images
     classes:
       - 类A
@@ -84,7 +84,7 @@ description: >-
     ```yaml
     ---
     kind: proj
-    goal_file: /path/to/goals.md
+    goal_file: D:\path\to\goals.md
     success: 一句总成功标准
     ---
     ```
@@ -174,18 +174,18 @@ description: >-
 
 ### 7.3 写法示例
 
-  用户只写「负样本挖掘」。下面是对照已确认地图之后应有的层次。**服务器落点和模型版本地图没写：写成请组长定 + 建议，不编进步骤当已定，也不问用户。**路径用占位，不要抄某台机器。
+  用户只写「土地负样本挖掘」。下面是对照本地地图 `env-local/datasets.md` §3.2 之后应有的层次。**服务器落点和模型版本地图没写：写成请组长定 + 建议，不编进步骤当已定，也不问用户。**
 
     ```markdown
     ---
     kind: proj
-    goal_file: /path/to/goals.md
-    success: 待挖的数据在已确认的服务器上按已确认模型挖完，产物可拷回
+    goal_file: D:\path\to\goals.md
+    success: 待挖的土地 toclean 在服务器上按已确认模型挖完，产物可拷回
     ---
 
-    # 工单 · 负样本挖掘
+    # 工单 · 土地负样本挖掘
 
-    来源：用户目标文件。地图：`workenv/env-local/datasets.md`。
+    来源：用户目标文件。地图：`workenv/env-local/datasets.md` §3.2。
 
     ## 0 核对
 
@@ -193,9 +193,9 @@ description: >-
     | --- | --- | --- |
     | 在岗 | 读 `online.json` / `room.md`。已有人在挖则本单不新开挖掘 | 房间，只读不进 |
     | 本机数据根 | `/path/to/data` | `link.md` 已确认 |
-    | 待处理 | `/path/to/data/toclean` | 本地地图 |
+    | 待处理 | `/path/to/data\1-ChangeDetect\2-FieldChange\toclean` | 本地地图 §3.2 |
     | 服务器数据根 | 待确认 | `link.md` Data 已确认根未写子路径。请组长定 |
-    | 模型 | 待确认 | `projects.md` 未写版本。请组长定 |
+    | 土地模型 | 待确认 | `projects.md` 未写版本。请组长定 |
 
     ### 现在拍板
 
@@ -203,8 +203,8 @@ description: >-
 
     ### 请组长定
 
-    - 远端落哪一层：建议已确认数据根下的 `toclean` 同级，依据 `link.md` Data 行和本地地图。
-    - 模型：建议用上一张同类票或房间写过的挖掘版本，不编 `latest`。
+    - 远端落哪一层：建议已确认数据根 `/path/to/home/0-data/1-ChangeDetect/2-FieldChange/toclean` 同级，依据 `link.md` Data 行 + 本地地图 §3.2。
+    - 土地模型：建议用上一张同类票或房间写过的挖掘版本，不编 `latest`。
 
     ---
 
@@ -214,9 +214,14 @@ description: >-
 
     | 目录 | A / B | 备注 |
     | --- | --- | --- |
-    | `<数据集目录>` | 张数以地图为准 | 无 json / label |
+    | `GEOAI-((ChangeD_Zhongke))-Selfcollect-2609-(D)(OL)` | 31820 | 无 json / label |
+    | `GEOAI-((ChangeD_Zhongke_dsample))-Selfcollect-2609-(D)(OL)` | 12448 | 无 json / label |
+    | `toclean-GEOAI-dsample` | 3112 | 有 `draft` |
+    | `toclean-new` | 2571 | 其下 `tiles_1024` 只有 `draft` |
 
-    不挖（已是挖掘产物，除非用户改口）：`dsample` 是负样本，`sample` 是对照。
+    不挖（已是挖掘产物，除非用户改口）：`dsample`（3052）、`sample`（1705）。
+
+    待确认：上面 4 个里挖哪几个；是否包含 `toclean-new/tiles_1024`。
 
     ---
 
@@ -228,7 +233,7 @@ description: >-
     | --- | --- |
     | 工种 | `ops-engineer` |
     | 依赖 | — |
-    | 本机 | `/path/to/data/toclean/<已确认的目录>` |
+    | 本机 | `/path/to/data\1-ChangeDetect\2-FieldChange\toclean\<已确认的 GEOAI-…>` |
     | 远端 | 待确认 |
     | 技能 | `skills/tool-remote` |
     | 做法 | 按 tool-remote 上传并核对张数。路径加引号 |

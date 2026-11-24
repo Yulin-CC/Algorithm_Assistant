@@ -15,9 +15,7 @@ description: >-
 
 ## 1 产线根
 
-  - `REPO`：本工作区的 `.cursor/`。不要把用户家目录 `~/.cursor` 当产线仓。临时文件只写仓库根 `_tmp/`。
-  - 权重版本、测试集、算法仓路径必须来自派工 prompt，禁止无版本号乱测、禁止猜盘。
-  - 要操作服务器时先 Read `workenv/link.md`。没填主机或目录就问。
+  - `REPO` = 本工作区的 `.cursor/`。权重版本、测试集、算法仓路径来自派工 prompt，禁止无版本号乱测。服务器、猜盘、临时文件、Windows 不起服务这些通则见常驻规则「产线」，本文件不再复述。
   - 派工里缺版本 / 测试集 / 交付路径：停，问组长。派工须写清走指标、可视化、还是两条都走。新版本还须写清对照的上一版权重；对不上就停。
 
 ## 2 两种测试
@@ -48,7 +46,7 @@ description: >-
   - `REPO/skills/agent-auto_demo/SKILL.md`（`_demo_eval` / `_demo_infer`）
   - `REPO/skills/agent-smart_image/SKILL.md`（可视化：`analysis.py --pred`，省略 `--gt`。`wrong` 是误检，变化检测有 `repro/<版本>/draft/miss/` 才计漏检）
   - `REPO/skills/tool-gt_rectify/SKILL.md`（检测框真/假误检、弱标签；旁路）
-  - SSH：`REPO/skills/tool-remote/SKILL.md`。缺 Python 环境停回组长，不执行 `tool-build_env`。组长派运维装好再派回。派工里的工作区结论（已齐 / 已构建）照单执行；没有这句，或盘上对不上，停回组长，不自己建槽。建槽交回组长派运维。
+  - SSH：`REPO/skills/tool-remote/SKILL.md`。缺 Python 环境按常驻规则「交接」停回组长。派工里的工作区结论（已齐 / 已构建）照单执行；没有这句，或盘上对不上，停回组长，不自己建槽。建槽交回组长派运维。
 
 ## 5 禁止
 
@@ -56,15 +54,14 @@ description: >-
   - 用 `0-Feedback` 出精确率 / 召回 / F1。
   - 自己开一轮新训（交回组长派 `train-engineer`）。
   - 自己做预标注产线或负样本挖掘（交回组长派 `data-engineer`）。
-  - 自己装环境，或做归不进测试的杂活（交回组长派运维）。
-  - 派其他工程师，或另开兄弟工程师。
+  - 越界与交接按常驻规则「交接」办：不自己装环境、不派工、不另开兄弟工程师、不做归不进测试的杂活。
 
 ## 6 交接
 
   - 报告：写在对应 `_demo_eval` 槽（或用户指定路径）。有客户票时进度只写该票 `todo.md`。测完还要把同一份 `testlog.md` 放到模型备份目录根上（见第 7 节和第 8 节）。
   - **可视化落点**：`vis/`、`crops/` 这类图片产物写到该数据集根下的 `repro/<模型名>-<yymmdd>[-<后缀>]/`，不堆在票的 `0-results/`。票 `0-results/` 只放 `testlog.md` 和指标文件。报告里写清 `repro/` 的绝对路径。
-  - 交回组长：报告路径、Testdir 指标（若跑了；新版本含上一版对照表）、Feedback 与 Testdir 的可视化模式、建议（下一棒是补数还是改配置/再训）。写清现象、范围、建议的下一棒工种。坏图坏标签只建议移到同一数据根下的缓存目录（如 `_cache_bad/`），不建议删除。不要写「等用户决定」。
-  - 缺环境或杂活：写入 todo 的 blocked，交回组长。组长派运维装好后再派回。
+  - 交回组长：报告路径、Testdir 指标（若跑了；新版本含上一版对照表）、Feedback 与 Testdir 的可视化模式、建议（下一棒是补数还是改配置/再训）。写清现象、范围、建议的下一棒工种。坏图坏标签按常驻规则「交接」处理。
+  - 缺环境或杂活：写入 todo 的 blocked，按常驻规则「交接」交回组长。
   - 报告按下面第 7 节写。不新写模板引擎。不负责把 `checkpoint/` `config/` `vis/` `train.log` 拷进备份根，那是训练归档。
 
 ## 7 报告格式（testlog.md）
@@ -87,4 +84,4 @@ description: >-
 
 ## 8 模型备份里的报告
 
-  备份根见派工或 `workenv/env-local/docs.md`。目录名与训练工程名相同，样板 `[ChangeDetect]-SAMCD_Building-2611-v1.4`。把第 7 节那份 `testlog.md` 放在该目录根上，不要放进 `checkpoint/`。训练包（`checkpoint/` `config/` `vis/` `train.log`）应已在；缺了交回组长派训练补拷。分析报告可以后补，先不要挡住归档。
+  备份根见派工或 `workenv/env-local/docs.md`（这台是 `/path/to/models`）。目录名与训练工程名相同，样板 `[ChangeDetect]-SAMCD_Building-2611-v1.4`。把第 7 节那份 `testlog.md` 放在该目录根上，不要放进 `checkpoint/`。训练包（`checkpoint/` `config/` `vis/` `train.log`）应已在；缺了交回组长派训练补拷。分析报告可以后补，先不要挡住归档。

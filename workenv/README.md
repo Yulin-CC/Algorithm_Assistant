@@ -1,8 +1,10 @@
 # 🗺️ 工作地图
 
-给人改、给助手读的工作环境。连接说明只在 `link.md`。助手真正调用的地址在 `.cursor/model/config/vllm_server.json` 和 `sam.json`。
+给人改、给助手读的工作环境。连接说明只在 `link.md`。
 
-- [ ] 主机、数据根、项目根、服务 URL 都待确认
+服务本身（端口、模型名、请求方式、装法）不在本目录，在 `.cursor/server/`。本目录只管**这台机器上东西在哪、怎么起**。
+
+- [x] 2026-11-17 数据根和项目根已确认并展开。主机和 Agent 路径仍待确认。YOLO26 场景文字 OCR 已跑通
 
 - [1 目录](#1-目录)
 - [2 怎么改](#2-怎么改)
@@ -15,17 +17,19 @@
 ```
 workenv/
 ├── README.md            # 本文件
-├── require.md           # 初始化脚本，与 .cursor/agents/require.md 相同
 ├── env-local/           # 本机
 │   ├── datasets.md      # 数据根，到数据集
 │   ├── projects.md      # 项目根，仓库一层
 │   └── docs.md          # 本机工作方式
-├── API-server.md        # 探活、自搭建说明、付费 API、按次脚本
-├── link.md              # 主机、目录对应、启动脚本、URL、按次脚本
+├── env-<HOST>/   # 当前这台服务器，待确认
+│   ├── datasets.md
+│   ├── projects.md      # 含 SAM-CD、YOLO26
+│   └── docs.md
+├── link.md              # 主机、目录对应、启动脚本、权重目录
 └── habits.md            # 个人习惯画像：已确认的长期偏好
 ```
 
-没填服务器就不建 `env-<主机>/`。
+初始化脚本 `.cursor/agents/require.md` 只有一份，不放在这里。
 
 ---
 
@@ -33,13 +37,15 @@ workenv/
 
 - 数据根：改 `datasets.md`，按「到数据集」展开。走到一套数据的目录就停，内容层和产物层不进去。
 - 项目根：改 `projects.md`，只到仓库一层，不进源码、权重、`.git`。
-- 主机、目录对应、启动脚本、服务 URL：改 `link.md`，然后写回两个 json。
-- 服务通不通、自搭建、付费 API、按次脚本：改 `API-server.md`。改了 URL 同样写回两个 json。没有 URL 的按次脚本不写回 json。
-- 初始化步骤：`require.md` 与 `.cursor/agents/require.md` 是同一份，改一处时两处一起改。
+- 主机、目录对应、启动脚本、权重目录：改 `link.md`。
+- 服务端口、模型名、请求方式、装法：改 `.cursor/server/` 下的文件，不在这里写。
+- 程序读的地址：改 `.cursor/server/config/vllm_server.json` 和 `sam.json`。
+- 初始化步骤：只改 `.cursor/agents/require.md`，这里不放副本。
 - 个人习惯：改 `habits.md`。只由组长改。用户改口标已确认；观察中不当依据。不写某张票的路径和张数。路径仍写 `link.md` 和 `env-*`。
+- 当日便签路径：改 `env-local/docs.md`。
 
 ---
 
 ## 3 确认状态
 
-这是一张空白地图。数据根、项目根、文档路径、主机和服务 URL 都待确认。两个 json 还是空的。看过本文件并点头之前，不把确认列改成已确认。
+数据根和项目根已于 2026-11-17 确认。本机和服务器的数据地图已按「到数据集」展开，项目地图到仓库一层。文档路径仍空着。主机和 Agent 路径仍待确认。YOLO26 场景文字 OCR 是按次脚本，2026-11-17 已跑通，记在服务器 `projects.md` 和 `link.md` 第 3 节。

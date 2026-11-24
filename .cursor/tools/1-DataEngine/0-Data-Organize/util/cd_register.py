@@ -19,8 +19,8 @@ from tqdm import tqdm
 #==============================#
 # 接口配置
 #==============================#
-# /path/to/...
-ROOT_DIR = r"/path/to/..."   # 遍历其下所有含 A/B 的子文件夹
+# /path/to/data\1-ChangeDetect\cache\数据中心文件-中科青云
+ROOT_DIR = r"/path/to/data\1-ChangeDetect\toclean\testset-01"   # 遍历其下所有含 A/B 的子文件夹
 Mutil_DIR = False                                                     # True: 遍历 DATA_DIR 下所有子文件夹；False: 只处理 DATA_DIR 自身
 
 LOG_JSON = None                                                    # 可选，如 os.path.join(ROOT_DIR, "register_log.jsonl")

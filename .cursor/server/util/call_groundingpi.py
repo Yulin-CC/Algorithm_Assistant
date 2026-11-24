@@ -18,11 +18,11 @@ from urllib import error, request
 #-----------------#
 # ⭐需要修改的值⭐
 #-----------------#
-image = r""                                                    # 本地图片路径（Windows 可用 r"/path/to/..."）
+image = r""                                                    # 本地图片路径（Windows 可用 r"D:\pic.jpg"）
 #----------------------------------------------------#
 prompt = "Locate all the instances that match the following categories: car</c>truck</c>bus</c>van</c>construction vehicle."
 #----------------------------------------------------#
-base_url = "http://<ip>:8082/v1"                     # GroundingPI 外网
+base_url = "http://<HOST>:8082/v1"                     # GroundingPI 外网
 #----------------------------------------------------#
 model_name = "groundingpi"                                     # 对外模型名
 #----------------------------------------------------#

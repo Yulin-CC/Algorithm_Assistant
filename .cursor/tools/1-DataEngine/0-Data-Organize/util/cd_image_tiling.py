@@ -23,8 +23,8 @@ from tqdm import tqdm
 #==============================#
 # 接口配置
 #==============================#
-INPUT_DIR = r"/path/to/..."          # 多文件夹: 根目录 (遍历子文件夹)；单文件夹: 具体 GEOAI 目录
-OUTPUT_DIR = r"/path/to/..."   # 输出根目录，自动追加原文件夹名
+INPUT_DIR = r"/path/to/data\1-ChangeDetect\TestSet\0-Feedback\260616\rm"          # 多文件夹: 根目录 (遍历子文件夹)；单文件夹: 具体 GEOAI 目录
+OUTPUT_DIR = r"/path/to/data\1-ChangeDetect\TestSet\0-Feedback\260616\rm\0-tiles"   # 输出根目录，自动追加原文件夹名
 Mutil_DIR = False          # True: 遍历 INPUT_DIR 下所有子文件夹；False: 只处理 INPUT_DIR 自身
 TILE_SIZE = 1024          # 切片尺寸（正方形）
 SRC_A, SRC_B = "A_cropped", "B_cropped"   # 切片输入（配准裁剪结果）

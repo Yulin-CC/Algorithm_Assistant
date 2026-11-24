@@ -30,9 +30,9 @@ disable-model-invocation: true
   - **本包根目录 `PKG_ROOT`**：`.skill/` 的上一级。
   - **数据**：单张绝对路径，或数据集目录（`images/` 或根下直接放图）。禁止猜测。
   - **落盘**（数据集，相对 `data_root`）：`model/` 是发给模型的图；`vis/` 是给人看的整图和表；`result/` 是 json。理解图像写 `draft/describe/result/jsons/{stem}.json`，两期拼图另存 `draft/describe/model/{stem}.jpg`。预标过滤写 `draft/overlay/`。`wrong` 和 `adjust` 的裁图另抄到 `draft/to_check/<类别>/wrong` 与 `adjust`。变化检测 `--masks` 另抄 `fit`。结果分析：变化检测不写 `draft/`，写 `repro/<版本>/analysis/`；目标框写 `draft/analysis/`。都不写正式 `labels/`，不改已有 LabelMe。旧路径 `draft/descriptions/` 仅作续跑读取。
-  - **服务**：vLLM `model/config/vllm_server.json`。联通检查由 **总调度** 先做（`--skip-sam`）。本叶不再探测、**不下任何权重**。
-  - **共享客户端**：`REPO/model/util/`（`vllm_client.py` / `common.py`）。
-  - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，venv slug=`describe-qwen`，`PKGS=tqdm`（叠图质检另加 `opencv-python numpy`）。Windows 控制台 `PYTHONUTF8=1`。用户指定 conda 环境时用该解释器，不另建 venv。
+  - **服务**：vLLM `server/config/vllm_server.json`。联通检查由 **总调度** 先做（`--skip-sam`）。本叶不再探测、**不下任何权重**。
+  - **共享客户端**：`REPO/server/util/`（`vllm_client.py` / `common.py`）。
+  - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，venv slug=`describe-qwen`，`PKGS=tqdm`（叠图质检另加 `opencv-python numpy`）。Windows 控制台 `PYTHONUTF8=1`。用户指定 conda `yulin` 时用该解释器，不另建 venv。
   - **不做**：不分类、不出框、不分割、不写 `labels/`、不下载 Qwen 权重。不改写 `jsons-det-pre*` 或任何已有 LabelMe。调整只写 `draft/adjust/`。不执行 `uv cache clean`。不写 `agent-auto_demo`。不把 DetSeg 的 `--gate` 当本叶入口。
 
 ---
@@ -139,8 +139,8 @@ disable-model-invocation: true
   | 调整 | `util/opt_adjust.py` | 定档 `adjust` 的框中心当报点，其余目标涂灰后裁图，再走补标。变化检测 `--masks` 由 Qwen 重新报点再交 Triton SAM，不走 GroundingPI |
   | 4 结果分析 | `util/analysis.py` | 误检、不贴合、已有漏检；不再问模型 |
   | 变化检测 | `util/label_grade.py --masks` | 两期 png 掩膜定档。整图绘制在 `util/overlay.py` |
-  | 共享 | `REPO/model/util/` | vLLM / 扫图 |
-  | 服务 | `REPO/model/config/vllm_server.json` | default vLLM |
+  | 共享 | `REPO/server/util/` | vLLM / 扫图 |
+  | 服务 | `REPO/server/config/vllm_server.json` | default vLLM |
 
 ---
 

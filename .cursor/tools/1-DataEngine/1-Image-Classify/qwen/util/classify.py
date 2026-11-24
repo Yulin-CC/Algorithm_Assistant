@@ -23,7 +23,7 @@ from pathlib import Path
 
 _PKG_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 _REPO = os.path.normpath(os.path.join(_PKG_ROOT, "..", "..", "..", ".."))
-_MODEL_UTIL = os.path.join(_REPO, "model", "util")
+_MODEL_UTIL = os.path.join(_REPO, "server", "util")
 if _MODEL_UTIL not in sys.path:
     sys.path.insert(0, _MODEL_UTIL)
 
@@ -464,7 +464,7 @@ def _resolve_service(base_url, model):
         name = name or (svc.get("model") or "").strip()
     if not url or not name:
         raise RuntimeError(
-            "未指定 --base_url/--model，且 model/config/vllm_server.json 无 default 服务"
+            "未指定 --base_url/--model，且 server/config/vllm_server.json 无 default 服务"
         )
     return url.rstrip("/"), name
 
@@ -1195,7 +1195,7 @@ def cmd_deliver(args):
 def _add_shared(p):
     p.add_argument("--dataset", required=True, help="数据集根目录")
     p.add_argument("--images", default="images", help="图像子目录名，默认 images")
-    p.add_argument("--base_url", default="", help="空则读 model/config/vllm_server.json 的 default")
+    p.add_argument("--base_url", default="", help="空则读 server/config/vllm_server.json 的 default")
     p.add_argument("--model", default="")
     p.add_argument("--timeout", type=int, default=600)
     p.add_argument("--workers", type=int, default=4)

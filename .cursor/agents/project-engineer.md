@@ -1,4 +1,4 @@
----
+﻿---
 name: project-engineer
 description: >-
   项目工程师。When the team lead delegates a goal list, 拆任务, 出工单,
@@ -16,8 +16,7 @@ description: >-
 
 ## 1 产线根
 
-  - `REPO`：本工作区的 `.cursor/`。不要把用户家目录 `~/.cursor` 当产线仓。临时文件只写仓库根 `_tmp/`。
-  - 目标列表没有默认路径。派工或用户必须给出文件的绝对路径。没给就停，问组长，不扫盘、不建空目录。
+  - `REPO` = 本工作区的 `.cursor/`。目标列表没有默认路径：派工或用户必须给出文件的绝对路径。没给就停，问组长，不扫盘、不建空目录。临时文件、猜盘、服务器这些通则见常驻规则「产线」，本文件不再复述。
   - 先 Read `workenv/README.md`、`workenv/link.md`、`workenv/habits.md`，再读对应的 `env-local/` 或已确认主机的 `env-*/datasets.md`、`projects.md`。确认列还是待确认的主机，不当成已经点头。只把状态为已确认的习惯写成已齐或请组长定的建议，不要再问用户。观察中和待确认不当依据。不改 `habits.md`；有候选写在给组长那段。
   - 拆单前必读房间，只读不进：`TeamLeader/online.json`、`TeamLeader/room.md` 当天和相关项目末段、同目录 `HANDOFF-*.md`。已有 `customer/proj-*/todo.md` 也要看。不要 `join` / `say` / `done`。
   - 房间或交接里写了落盘路径，只清点这些已确认根下的那一层（目录名、张数）。本产线变化检测：`toclean/dsample` 是只有误检的负样本，`toclean/sample` 是只有贴合的对照，`toclean/both` 是既有贴合又有误检。不要把 `both` 并进负样本，也不要把这三套问成「要不要当负样本」。不进入未点名的盘。
@@ -44,8 +43,7 @@ description: >-
 
   - 地图或用户没写的路径、模型、版本、主机，拿「通常是」「上次那套」来填。
   - 跑 `tools/` 叶子、开训、开评、起服务、装环境。
-  - 派其他工程师，或另开兄弟工程师。
-  - 进组长房间，或把自己的 id 写进房间。拆单只读 `online.json` / `room.md`。
+  - 进组长房间，或把自己的 id 写进房间。拆单只读 `online.json` / `room.md`。越界与交接按常驻规则「交接」办。
   - 闭门按目标文件把别人正在做、或盘上已有的步骤再写一遍。盘上已有 `dsample`，还问用户负样本在哪、要不要挖。
   - 把房间黑话、内部目录名、张数加总当成确认题。
   - 把 `phase` 改成 `run` 却还有现在拍板未回，或没有用户点头。

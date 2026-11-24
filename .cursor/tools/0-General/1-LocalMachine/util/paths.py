@@ -13,6 +13,11 @@ _CANDIDATES = (
     Path.home(),
     Path(os.environ.get("TEMP") or os.environ.get("TMP") or "/tmp"),
     Path("/tmp"),
+    Path("D:/0-data"),
+    Path("D:/1-project"),
+    Path("D:/4-docs"),
+    Path("/path/to/home"),
+    Path("/path/to/home"),
 )
 
 

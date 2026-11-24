@@ -169,7 +169,7 @@ description: >-
   若工具分布在**多个 Skill 共享的目录**，在工具索引开头声明根目录：
 
   ```markdown
-  - 工具根目录：`/path/to/...`（各 Skill 共用）
+  - 工具根目录：`/path/to/home/1-project/1-PROCESS/`（各 Skill 共用）
   ```
 
   - 若工具路径为绝对路径，在表格中省略「相对路径」说明，直接写 `` `绝对路径` ``。

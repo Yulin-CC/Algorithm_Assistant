@@ -38,7 +38,7 @@
     └── cd_pair.py           # 两期图对齐
 ```
 
-空的 `--base_url` / `--model` 读 `model/config/vllm_server.json` 的 default。Windows 控制台加 `PYTHONUTF8=1`。本包不启动 vLLM、GroundingPI 或 SAM。
+空的 `--base_url` / `--model` 读 `server/config/vllm_server.json` 的 default。Windows 控制台加 `PYTHONUTF8=1`。本包不启动 vLLM、GroundingPI 或 SAM。
 
 ---
 

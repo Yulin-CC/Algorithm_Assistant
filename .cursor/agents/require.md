@@ -1,19 +1,20 @@
 # 助手初始化与用户引导
 
-本文件有两份，内容相同：`.cursor/agents/require.md`（常驻规则读这份）、`workenv/require.md`（放在地图旁边）。改一处时两处一起改。
+本文件是唯一一份，常驻规则里写的就是它。仓库根 `workenv/` 下不放副本，改脚本只改这里。
 
 - **何时走**: 用户说「请进行项目初始化」或同义。其它对话不跑。
 - **谁做**: 组长问和确认。写地图、探活、连服务器、建槽、装环境派运维。组长不自己装环境，不自己建槽。
-- **日期**: 2026-11-17
+- **日期**: 2026-11-24
 
 ## 1 地图
 
-工作地图在仓库根 `workenv/`。连接说明只有 `workenv/link.md`。助手调用的 URL 以 `.cursor/model/config/vllm_server.json` 和 `sam.json` 为准。
+工作地图在仓库根 `workenv/`，只放这台机器的事实。连接说明只有 `workenv/link.md`。
+
+服务本身在 `.cursor/server/`，初始化只更新其中的端口、API 和现状，不改装法。
 
 ```
 workenv/
 ├── README.md
-├── require.md
 ├── env-local/
 │   ├── datasets.md
 │   ├── projects.md
@@ -22,8 +23,18 @@ workenv/
 │   ├── datasets.md
 │   ├── projects.md
 │   └── docs.md
-├── API-server.md
-└── link.md
+├── link.md
+└── habits.md
+```
+
+```
+.cursor/server/           # 服务固定这几个，初始化不改目录结构
+├── README.md             # 服务总表
+├── services/             # 一服务一篇：端口、模型名、注意点
+├── env_building.md       # 装法。初始化不动它
+├── config/               # vllm_server.json、sam.json：地址唯一权威
+├── util/                 # 客户端与 probe.py
+└── ledger/runs.md        # 起停台账
 ```
 
 没填服务器就不建 `env-<主机>/`。文档路径可以空，`docs.md` 留占位。
@@ -39,15 +50,15 @@ workenv/
     - `datasets.md` 按「到数据集」这一档展开，不写别的档。从确认过的根往下走，直到一套数据的目录。目录名属于内容层或产物层时停，不进去。内容层：`A`、`B`、`images`、`json`、`jsons`、`jsons-*`、`label`、`labels`、`labels-*`、`annotations`。产物层：`repro`、`draft`、`cache`、`__pycache__`、`crop`、`vis`、`vis-*`、`bcd_map`、`vismask`、`register`、`register_B`。停住的目录写在父级同一行，附这个目录直接文件的扩展名和数量。不写单个文件名。
     - `projects.md` 只到仓库一层：仓库名加一句它是什么。不套用上面的内容层、产物层停名，不进源码、权重、`.git`。
     - 只读已经确认的根。用户明确说先别展开时，数据根只留直接子目录，并注明还没按「到数据集」展开。项目根仍只到仓库一层。
-4. 派运维在 `.cursor` 下跑 `python model/util/probe.py`。按条登记到 `API-server.md`。有地址但探活失败，状态写「未跑」，不要问有没有地址。没有地址才问；用户也没有，就留占位。两种情况都写明缺了会影响识图、预标、补标里的哪一块。整次探活失败只说明默认模型或 SAM 不通；其它通的按条登记，不把 FP8 改成默认。Windows 不起 vLLM / SAM。现在搭不搭留到第 7 步。
-5. `API-server.md` 的「环境自搭建说明」要写在这一节里。到服务器上找对应仓库的 `README.md`（vLLM / GroundingPI、Triton SAM，以及 `link.md` 里其它已确认的服务），把环境、依赖和启动步骤补进这一节，并注明摘自哪份 README。写明登录用户、conda 根、权重根、数据根；这四项可以不在同一个 home。脚本在、权重目录不在的，标明「现在不能起」。找不到 README 就写明缺的是哪一条路径，不要留成空话。真正安装仍派运维，初始化本身不启动服务。
-6. 请用户看 `workenv/README.md` 并确认。调用始终读两个 json。用户看过并点头之前，确认列不能改成已确认，也不把这张地图当成新机器的默认。点头之后，把 `link.md` 里的 URL 写回两个 json。用户后来改了 `workenv/link.md` 或 `API-server.md` 里的路径或 URL，先写回 json，再干活。
+4. 派运维在 `.cursor` 下跑 `python server/util/probe.py`。按条登记到 `server/README.md` 第 1 节和对应 `server/services/*.md` 的「现状」。有地址但探活失败，状态写「未跑」，不要问有没有地址。没有地址才问；用户也没有，就留占位。两种情况都写明缺了会影响识图、预标、补标里的哪一块。整次探活失败只说明默认模型或 SAM 不通；其它通的按条登记，不把 FP8 改成默认。Windows 不起 vLLM / SAM。现在搭不搭留到第 7 步。
+5. 服务固定是 Qwen、GroundingPI、Triton SAM 这几个，`server/env_building.md` 里已写好装法，初始化**不改它**。要补的是这台机器的事实：`workenv/link.md` 记启动脚本绝对路径与权重目录；`server/services/*.md` 的「现状」写这台机器上能不能起。到服务器上找对应仓库的 `README.md` 核对装法，与本文件不符的写进 `env_building.md` §3「已知坑」并注明摘自哪份 README。写明登录用户、conda 根、权重根、数据根；这四项可以不在同一个 home。脚本在、权重目录不在的，在 `link.md` 标明「现在不能起」。找不到 README 就写明缺的是哪一条路径，不要留成空话。真正安装仍派运维，初始化本身不启动服务。
+6. 请用户看 `workenv/README.md` 和 `server/README.md` 并确认。用户看过并点头之前，确认列不能改成已确认，也不把这张地图当成新机器的默认。点头之后，把探到的地址写回 `server/config/vllm_server.json` 和 `sam.json`。用户后来改了 `workenv/link.md` 的路径，同步 `env-*/`；改了服务地址或端口，先写回两个 json，再干活。
 7. 再问一轮，两句一起问。用户说先不做就停，直接说第 3 节的开场白。
     - 要看哪个项目仓。只看点名的那一个，不扫 `projects.md` 里的全部仓库。两选一：按 `skills/standard-project_merge` 整理（改动大，先说清楚再动），或只按 `skills/standard-project_agentdemo` 建 `0-Agent-demo`（可删）。整理和建槽派运维，不开训。
-    - 缺的服务现在搭不搭。要搭先看组长房间：同一 GPU 或端口已有人在用，先说明，不搭。没有占用再看 GPU，按 `API-server.md` 里已经写好的「环境自搭建说明」派运维。权重目录不存在的服务不排进「现在能起」。启动脚本以 `link.md` 为准。
+    - 缺的服务现在搭不搭。要搭先看组长房间：同一 GPU 或端口已有人在用，先说明，不搭。没有占用再看 GPU，按 `server/env_building.md` 派运维。权重目录不存在的服务不排进「现在能起」。启动脚本以 `link.md` 为准。
 
 ## 3 开场白
 
 确认完（即使用户跳过第 7 步）由组长说：
 
-嗨！初次见面，我是你的算法助手！地图已经铺好啦。数据、训练、测试、环境，你指到哪儿，我就干到哪儿。缺的服务我记在 workenv/API-server.md 了，想搭的时候喊我一声，马上安排！
+嗨！初次见面，我是你的算法助手！地图已经铺好啦。数据、训练、测试、环境，你指到哪儿，我就干到哪儿。缺的服务我记在 .cursor/server/ledger/runs.md 了，想搭的时候喊我一声，马上安排！

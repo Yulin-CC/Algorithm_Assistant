@@ -33,8 +33,8 @@ disable-model-invocation: true
     ```
 
     不写正式 `jsons/`、`labels/`。sample 不写全量目录。`imagePath` 由脚本按 json 位置相对到原图。
-  - **服务**：GroundingPI 在 `model/config/vllm_server.json`（name=`GroundingPI`，**不是** default Qwen）。SAM `model/config/sam.json`（仅 segment）。联通检查由 **总调度** 先做。本叶不再探测、**不下任何权重**。请求必须 `skip_special_tokens=false`。
-  - **共享客户端**：`REPO/model/util/groundingpi_client.py`（及 segment 时 `sam_client.py`）。
+  - **服务**：GroundingPI 在 `server/config/vllm_server.json`（name=`GroundingPI`，**不是** default Qwen）。SAM `server/config/sam.json`（仅 segment）。联通检查由 **总调度** 先做。本叶不再探测、**不下任何权重**。请求必须 `skip_special_tokens=false`。
+  - **共享客户端**：`REPO/server/util/groundingpi_client.py`（及 segment 时 `sam_client.py`）。
   - **任务**：`detect`（矩形，不调 SAM）或 `segment`（多边形）。门控仅 segment 且非 detect，且只给旧流程。图像理解与误检过滤走 `0-General/0-SmartImage`（`agent-smart-image`），不在本叶改框。
     - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，临时 venv slug=`detseg-groundingpi`，`PKGS=tqdm opencv-python shapely numpy pillow "tritonclient[grpc]"`。Windows 控制台 `PYTHONUTF8=1`。
   - **不做**：不用 HQ-SAM、不训练、不跑金字塔/基类互补、不下载权重。不执行 `uv cache clean` / `pip uninstall`。不要把本叶拷进客户票。
@@ -112,9 +112,9 @@ disable-model-invocation: true
   | 分类 | 工具路径 | 用途 |
   | --- | --- | --- |
   | 入口 | `util/detect_segment.py` | `sample` / `run` |
-  | 共享 | `model/util/groundingpi_client.py` | GroundingPI 请求与特殊 token 解析 |
-  | 服务 | `model/config/vllm_server.json` | name=`GroundingPI` |
-  | 服务 | `model/config/sam.json` | 标准 SAM gRPC（仅 segment） |
-  | 探测 | `model/util/probe.py --service GroundingPI` | 总调度用；detect 加 `--skip-sam` |
+  | 共享 | `server/util/groundingpi_client.py` | GroundingPI 请求与特殊 token 解析 |
+  | 服务 | `server/config/vllm_server.json` | name=`GroundingPI` |
+  | 服务 | `server/config/sam.json` | 标准 SAM gRPC（仅 segment） |
+  | 探测 | `server/util/probe.py --service GroundingPI` | 总调度用；detect 加 `--skip-sam` |
 
 ---

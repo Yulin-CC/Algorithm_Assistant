@@ -27,7 +27,7 @@ description: >-
 
   `_demo_train` 的一轮不写在槽根，写在槽内票目录。下面这张票只说明角色：一轮一个目录，超参在 `config/`，本轮数据在 `data/`，入口在 `util/`。它的数据文件名是 YOLOE 开集的，别的仓库不要套。
 
-  `/path/to/...`
+  `/path/to/home/1-project/0-VLM/16-YOLO-E/YOLOE/0-Agent-demo/_demo_train/image-261113-smartsecurity-yoloe-v1`
 
     ```text
     0-Agent-demo/
@@ -92,7 +92,7 @@ description: >-
 
   - `PROJECT_ROOT` 从 `util/` 向上四级到仓库根。`--config` 指向本票 `config/default.yaml`。数据参数只传本仓库入口真正有的那些，指向本票 `data/`。入口没有的参数不要加。
   - 整理时 `devices` 留空。为空，或起点权重不存在，打印 `blocked` 后退出，不起进程。
-  - conda 用 `standard-quickstart` 的 `CONDA_BASE`，不写死 `/path/to/...`。
+  - conda 用 `standard-quickstart` 的 `CONDA_BASE`，不写死 `/path/to/home/miniconda3`。
   - 禁止改上游源码。禁止把参照票的 `0-train.sh` 原样拷进来。
   - 不建 `customer/`。配比写在 `data/`，超参写在 `config/default.yaml`。不要再写一份入口不读的数据文件。
   - 禁止改 `0-QuickStart/`、仓库 `config/`、仓库 `data/`。缺文件只在本票副本里补。

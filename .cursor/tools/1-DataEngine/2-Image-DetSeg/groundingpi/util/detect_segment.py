@@ -20,7 +20,7 @@ from pathlib import Path
 
 _PKG_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 _REPO = os.path.normpath(os.path.join(_PKG_ROOT, "..", "..", "..", ".."))
-_MODEL_UTIL = os.path.join(_REPO, "model", "util")
+_MODEL_UTIL = os.path.join(_REPO, "server", "util")
 if _MODEL_UTIL not in sys.path:
     sys.path.insert(0, _MODEL_UTIL)
 

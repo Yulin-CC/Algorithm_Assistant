@@ -193,7 +193,7 @@ runs/0-train/<project>/
 
 ### 6.1 切换到虚拟环境
 
-clone 仓库的用户 conda 安装路径**各不相同**，禁止在脚本中硬编码 `/path/to/...<user>/miniconda3` 等绝对路径。统一使用 `CONDA_BASE` 变量 + 注释指引：
+clone 仓库的用户 conda 安装路径**各不相同**，禁止在脚本中硬编码 `/home/<user>/miniconda3` 等绝对路径。统一使用 `CONDA_BASE` 变量 + 注释指引：
 
 ```bash
 #---------------#
@@ -202,14 +202,14 @@ clone 仓库的用户 conda 安装路径**各不相同**，禁止在脚本中硬
 #   查找：dirname "$(dirname "$(which conda)")"
 #   环境名须与 README §0 环境 中 conda create -n 一致
 #---------------#
-CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/...
+CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/home/miniconda3
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate <env_name>
 ```
 
 - **默认值**：`CONDA_BASE` 默认 `$HOME/miniconda3`；本机路径不同时改脚本默认值，或运行前 `export CONDA_BASE=/path/to/conda`。
 - **环境名**：`<env_name>` 与 README「环境搭建」中 `conda create -n` 保持一致（如 `yoloe`）。
-- **禁止**：写死 `/path/to/...` 且无任何修改说明。
+- **禁止**：写死 `/path/to/home/...` 且无任何修改说明。
 
 ---
 
@@ -250,7 +250,7 @@ lr=0.1                                 # 学习率
 #   查找：dirname "$(dirname "$(which conda)")"
 #   环境名须与 README §0 环境 中 conda create -n 一致
 #---------------#
-CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/...
+CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/home/miniconda3
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate <env_name>
 
@@ -308,7 +308,7 @@ img_size=256                                      # 输入图像尺寸
 #   查找：dirname "$(dirname "$(which conda)")"
 #   环境名须与 README §0 环境 中 conda create -n 一致
 #---------------#
-CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/...
+CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/home/miniconda3
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate <env_name>
 
@@ -375,7 +375,7 @@ batch=4                                           # 批大小
 #   查找：dirname "$(dirname "$(which conda)")"
 #   环境名须与 README §0 环境 中 conda create -n 一致
 #---------------#
-CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/...
+CONDA_BASE="${CONDA_BASE:-$HOME/miniconda3}"   # 本机示例：/path/to/home/miniconda3
 source "$CONDA_BASE/etc/profile.d/conda.sh"
 conda activate <env_name>
 

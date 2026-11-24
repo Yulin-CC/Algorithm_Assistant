@@ -33,8 +33,8 @@ disable-model-invocation: true
     ```
 
     不写正式 `jsons/`、`labels/`。sample 不写全量目录。`imagePath` 由脚本按 json 位置相对到原图。
-  - **服务**：vLLM `model/config/vllm_server.json`；SAM `model/config/sam.json`。联通检查由 **总调度** 先做。本叶不再探测、**不下任何权重**。
-  - **共享客户端**：`REPO/model/util/`（`vllm_client.py` / `sam_client.py` / `common.py`）。
+  - **服务**：vLLM `server/config/vllm_server.json`；SAM `server/config/sam.json`。联通检查由 **总调度** 先做。本叶不再探测、**不下任何权重**。
+  - **共享客户端**：`REPO/server/util/`（`vllm_client.py` / `sam_client.py` / `common.py`）。
   - **任务**：`detect`（矩形）或 `segment`（多边形）。思考默认关。`--gate` 仅旧票兼容的 SAM 叠图复审。图像理解与误检过滤走 `0-General/0-SmartImage`（`agent-smart-image`），不在本叶改框。
   - **环境**：Read `skills/tool-build_env/SKILL.md`。本叶：`NEED_TORCH=no`，临时 venv slug=`detseg-qwen`，`PKGS=tqdm opencv-python shapely numpy "tritonclient[grpc]"`。Windows 控制台 `PYTHONUTF8=1`。
   - **不做**：不用 HQ-SAM、不训练、不跑金字塔/基类互补、不下载 Qwen/SAM 权重。不执行 `uv cache clean` / `pip uninstall`。
@@ -112,9 +112,9 @@ disable-model-invocation: true
   | 分类 | 工具路径 | 用途 |
   | --- | --- | --- |
   | 入口 | `util/detect_segment.py` | `sample` / `run` |
-  | 共享 | `model/util/` | vLLM / SAM / 扫图 |
-  | 服务 | `model/config/vllm_server.json` | vLLM；`default: true` |
-  | 服务 | `model/config/sam.json` | 标准 SAM gRPC |
-  | 探测 | `model/util/probe.py` | 总调度用；本叶不重复 |
+  | 共享 | `server/util/` | vLLM / SAM / 扫图 |
+  | 服务 | `server/config/vllm_server.json` | vLLM；`default: true` |
+  | 服务 | `server/config/sam.json` | 标准 SAM gRPC |
+  | 探测 | `server/util/probe.py` | 总调度用；本叶不重复 |
 
 ---

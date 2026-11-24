@@ -21,12 +21,12 @@ disable-model-invocation: true
     1. `python util/<module>.py …`（CLI）
     2. `from system / files / run import Tools`（Open-WebUI 等：每个模块一个 `class Tools`）
     3. 直接调同名函数
-  - **路径白名单**：`util/paths.py` 的 `safe_path`。默认根：用户主目录、临时目录、`/tmp`。再加环境变量 `LOCALMACHINE_ROOTS`（`os.pathsep` 分隔）。这不是进程/容器隔离。
+  - **路径白名单**：`util/paths.py` 的 `safe_path`。默认根：用户主目录、临时目录、已存在的 `D:/0-data` `D:/1-project` `D:/4-docs` `/path/to/home` `/path/to/home` `/tmp`。再加环境变量 `LOCALMACHINE_ROOTS`（`os.pathsep` 分隔）。这不是进程/容器隔离。
   - **环境**：无第三方依赖，系统 Python 即可。不强制 uv。
   - **不做**：
     - 图像理解 / 误检过滤 → `0-SmartImage`（调度 `agent-smart-image`）
     - 建 venv / 装包 → `skills/tool-build_env`
-    - 未经用户同意，移动/删除/改写团队备份目录
+    - 未经用户同意，移动/删除/改写 `Y:\算法样本库\`
 
 ---
 
@@ -44,8 +44,8 @@ disable-model-invocation: true
     ```bash
     python util/system.py
     python util/system.py gpu
-    python util/system.py disk --path "/path/to/data"
-    python util/files.py ls "/path/to/data"
+    python util/system.py disk --path "D:/0-data"
+    python util/files.py ls "D:/0-data"
     python util/run.py /path/to/script.py --timeout 60
     ```
 
