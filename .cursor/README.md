@@ -48,7 +48,7 @@
 
 | Skill | 功能 |
 | --- | --- |
-| `agent-data_engine` | 数据引擎总调度。已接线：整理、Qwen 分类、YOLO26、SAM3、GroundingPI。预标没点名后端时默认 GroundingPI；旧说法「Qwen 检测」也改走它，不再调度 `2-Image-DetSeg/qwen`。分类与 GroundingPI 先 probe。GD 叶未接线则停。 |
+| `agent-data_engine` | 数据引擎总调度。已接线：整理、Qwen 分类、YOLO26、SAM3、GroundingPI。预标没点名后端时默认 GroundingPI；旧说法「Qwen 检测」也改走它。分类与 GroundingPI 先 probe。出框后交回组长，质检与落盘归 `agent-smart_image`。GD 叶未接线则停。 |
 | `agent-customer_task` | 在 `customer/<kind>-<yymmdd>-<slug>/` 建票：`.skill` + `require` + `util` + `todo.md`。`kind` 含 `proj`（项目工单，不绑叶子）。 |
 | `agent-pyramidlabel` | 金字塔迭代扩标。 |
 | `agent-auto_demo` | 各算法仓 `0-Agent-demo` 三槽训练 / 验证 / 推理。三槽由运维在派工前核对或新建，结论写入派工。确认 `Customer.md` 再开跑。 |
@@ -131,7 +131,8 @@ Qwen 视觉二/多分类。不写正式 `labels/`。
 | `groundingpi` | vLLM GroundingPI 给框；分割再交 Triton SAM | 预标默认。旧说法「Qwen 检测 / 分割」走这里 |
 | `yolo26` | 本地 YOLO26 权重 | 闭集、已有权重。用户点名才走 |
 | `sam3` | 本地 `sam3.pt` + 文本提示 | 开放词汇概念。用户点名才走 |
-| `qwen` | vLLM 给框 → Triton SAM 出 mask | 磁盘还在。调度不再调用；只有用户点名 `2-Image-DetSeg/qwen` 才进该叶 |
+
+旧的 `2-Image-DetSeg/qwen` 叶已删除。检测/分割只剩这三个；门控、识图、误检过滤由 `agent-smart_image` 的 `label_grade.py` 承担。
 
 ### 4.4 Grounding 数据集引擎（未接线）
 
@@ -157,8 +158,8 @@ customer/<票>/
 | `image-260827-class-complement` | 基类互补流程与脚本；工单模板，`data_root` 空则停 |
 | `image-260902-changedetect` | 建筑变化描述，走 `0-SmartImage` |
 | `image-260911-classify-field` | 田间变化数据，只分类 **B**：农田 / 非农田，七点 |
-| `image-260912-qwen-smartcity` | 智慧城市 testset 检测。旧票，叶仍是 `2-Image-DetSeg/qwen` |
-| `image-260922-qwen-testset` | 测试集航线检测。旧票，叶仍是 `2-Image-DetSeg/qwen` |
+| `image-260912-qwen-smartcity` | 智慧城市 testset 检测。旧票，原走已删除的 qwen 叶，仅留档 |
+| `image-260922-qwen-testset` | 测试集航线检测。旧票，原走已删除的 qwen 叶，仅留档 |
 | `image-260924-agri-box2seg` | 农业农村：框转多边形 |
 | `image-260926-roadcrack-fengqing` | 道路裂缝，只出框 |
 | `image-260927-classify-firelane-crops` | 消防通道 crop 的 mask 门控分类 |

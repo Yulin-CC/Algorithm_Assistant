@@ -134,6 +134,7 @@ disable-model-invocation: true
   | --- | --- | --- |
   | 1 理解图像 | `util/describe.py` | `--image` / `--dataset` → `{"description":"..."}` |
   | 2 误检定档 | `util/label_grade.py` | 框和掩膜 → `grade=fit|adjust|wrong`；叠图在 `util/overlay.py`；不改写标注 |
+  | 2b 过滤误检 | `util/label_filter.py` | 读定档结果，去掉 `grade=wrong` 写进新目录（默认 `<原目录>-drop`）。源标注不动。`--dry-run` 只统计 |
   | 漏检定位 | `util/label_miss.py` | 整图把已有目标盖成灰色掩膜后再报点，并裁 640 到 `draft/miss/crop/`。只用 Qwen。变化检测 `--masks`，提示词先向用户确认 |
   | 补标 | `util/opt_fill.py` | 先问落掩膜还是落框。`--shape mask` 是 Triton SAM 多边形。`--shape box` 再取掩膜的水平最小外接矩形。直出框才 `--refine off`。变化检测 pair 记录只允许 `--locate off --refine sam` |
   | 调整 | `util/opt_adjust.py` | 定档 `adjust` 的框中心当报点，其余目标涂灰后裁图，再走补标。变化检测 `--masks` 由 Qwen 重新报点再交 Triton SAM，不走 GroundingPI |
@@ -154,6 +155,7 @@ disable-model-invocation: true
 
   - **1 理解图像**：`util/describe.py`，已实现。
   - **2 误检过滤**：`util/label_grade.py`，已实现。叠图在 `util/overlay.py`。矩形画细框，多边形画半透明掩膜。两者都记 `grade=fit|adjust|wrong`。不删、不改原标注。`adjust` 交给 `opt_adjust.py`。变化检测是 `util/label_grade.py --masks`。
+  - **2b 过滤落盘**：`util/label_filter.py`。读 `draft/<slug>/result/jsons/` 的定档结果，按 `index` 对回源标注的 `shapes`，去掉 `grade=wrong`（旧结果里 `fit=miss` / `verdict=wrong` 也算），写进新目录。源目录不动，也不写正式 `jsons/`。没定档的条目原样保留，不擅自删。`--dry-run` 只统计。
   - **漏检**：`util/label_miss.py` 先把已有目标盖成实心灰色。多边形直接涂，矩形默认用 Triton SAM 收成掩膜再涂，不把整框涂灰。`--sam off` 时矩形直接涂整框，不调 Triton SAM。再在整图上报点。挨在一起的点并成一张裁图。不在图像边上时，裁图放大到车身不被切断，最大 1280；放不下就拆成多张。贴着图像边缘才保持切到边上。写 `draft/miss/crop/`。灰色区域不落点。报点用 Qwen，收掩膜用已有的 Triton SAM。变化检测加 `--masks`：两期已有变化涂灰后拼接，按 `--prompt` 报点，裁选中时相的原图。提示词先向用户确认，空则退出。不走 GroundingPI。
   - **补标**：`util/opt_fill.py` 读这些裁图。跑之前先问用户落掩膜还是落框，`--shape` 必填。掩膜是 `--shape mask`，Triton SAM 多边形就是结果。框是 `--shape box`，默认 GroundingPI 定位再 Triton SAM，然后取掩膜的水平最小外接矩形。用户明确说定位模型直出框时才 `--refine off`。SAM3 是定位的另一选择。两段可以单独关，不能同时关，掩膜不能关修边。GroundingPI、SAM3、Triton SAM 调数据引擎或已有客户端，脚本不切服务。组长在 `label_miss` 之后、`opt_fill` 之前切。不改原标注。变化检测的 `pair: true` 记录只允许 `--shape mask --locate off --refine sam`。新掩膜与原变化图大面积重叠的丢掉，png 写到 `draft/fill/masks/`，不覆盖原掩膜。
   - **4 结果分析**：`util/analysis.py`，已实现，归测试工程师，由组长派 `test-engineer`。汇总误检、不贴合和已有漏检。不改标注，不再问模型。识图、定档和补标归数据工程师，由组长派 `data-engineer`。

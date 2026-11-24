@@ -60,7 +60,7 @@ GroundingPI 把坐标输出成 `<0>`…`<999>` 这种量化 token。请求里如
 ## 4 注意
 
 - 不要拿它当识图后端，那是 Qwen 的活。
-- 与 Qwen 抢同一张卡时，通常要错开。出框跑完停掉再切 Qwen，这条链在 `skills/agent-data_engine` §2.2 里写死了。
+- 与 Qwen 抢同一张卡时，通常要错开。出框跑完停掉再切 Qwen，切服务与质检链归 `skills/agent-smart_image`，`agent-data_engine` 出框即止。
 - 权重目录约 9.2GB。换机器前先确认在盘上。
 
 ## 5 现状

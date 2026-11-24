@@ -52,7 +52,7 @@ description: >-
 ## 2 通用规定
 
   **(1)** `data_root` 写在 require，禁止猜测。
-  **(2)** 能力叶：分类 → `1-Image-Classify/qwen`；检测分割 → `2-Image-DetSeg/<backend>`；图像理解 / 误检过滤 → `0-General/0-SmartImage`（调度 `agent-smart-image`）；整理 → `0-Data-Organize`。定档 adjust 的改形也走该叶，不改原标注。
+  **(2)** 能力叶：分类 → `1-Image-Classify/qwen`；检测分割 → `2-Image-DetSeg/<backend>`（只有 `groundingpi`、`yolo26`、`sam3`，旧的 qwen 叶已删）；图像理解 / 定档 / 误检过滤 / 补标 → `0-General/0-SmartImage`（调度 `agent-smart_image`）；整理 → `0-Data-Organize`。定档 adjust 的改形也走该叶，不改原标注。
   **(3)** 落盘跟叶 Skill。customer 不另起产物目录。
   **(4)** 台账：本票 `todo.md`。数据集 `draft/` 只放产物。
   **(5)** 环境：`tool-build_env`；Qwen 叶先 `probe.py`。

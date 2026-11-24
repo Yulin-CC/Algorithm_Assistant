@@ -100,6 +100,8 @@ Agent 会询问你以下相关事项
 ```
 ./
 ├── README.md                         # 本文件
+├── 待办.md                           # 还没做的事，按轻重分级
+├── 开发日志.md                        # 每次迭代改了什么、为什么
 ├── workenv/                          # 工作地图。克隆下来是待确认
 │   ├── link.md                       # 主机、目录、启动脚本、权重目录
 │   ├── habits.md                     # 个人习惯画像：已确认的长期偏好
@@ -257,8 +259,7 @@ flowchart TD
 | 🎯 检测 / 分割 | YOLO26 | `2-Image-DetSeg/yolo26` | ✅ 已接线，本地权重 |
 | 🎯 检测 / 分割 | SAM3 | `2-Image-DetSeg/sam3` | ✅ 已接线，文本提示 |
 | 🎯 检测 / 分割 | GroundingPI | `2-Image-DetSeg/groundingpi` | ✅ 已接线，预标默认 |
-| 🎯 检测 / 分割 | Qwen 旧叶 | `2-Image-DetSeg/qwen` | 磁盘还在，调度不再调用 |
-| 🔍 识图 / 漏检补标 / 调整 | Qwen + SAM | `0-General/0-SmartImage` | 走 `agent-smart-image`。检测分割的 adjust 用框中心。变化检测先确认提示词，再由 Qwen 报点加 Triton SAM |
+| 🔍 识图 / 定档 / 过滤 / 补标 / 调整 | Qwen + SAM | `0-General/0-SmartImage` | 走 `agent-smart-image`。定档 `fit/adjust/wrong`，`label_filter` 过滤误检，adjust 用框中心 |
 | 📭 Grounding 数据集 | YOLOE / SAM3 / Qwen | `3-GD` / `4-GD` / `5-GD` | 占位，未接线 |
 
 ---

@@ -4,15 +4,14 @@ description: >-
   Dispatches DataEngine jobs under tools/1-DataEngine. Wired: dataset organize,
   Qwen classify, YOLO26/SAM3/GroundingPI detseg. Use when the user says 数据引擎,
   整理数据集, 预标注, 图像分类, YOLO26, SAM3, GroundingPI 检测, Qwen 检测,
-  classify, detseg, jsons-det-pre, or asks to run 1-DataEngine. Qwen
-  图像理解与误检过滤走 agent-smart-image（0-General/0-SmartImage）。
-  GroundingPI 检测或检测+Triton SAM 分割后默认 Qwen 叠图校验；切服务前须用户确认。定档 adjust 的改形走 SmartImage 补标链，不在本技能里改框。
----
+  classify, detseg, jsons-det-pre, or asks to run 1-DataEngine. 只管整理与标注产出；
+  质检、误检过滤、补标、写 jsons-det-pre 归 agent-smart-image，出框后交回组长。
+    10|---
 
 # ⚙️ Agent-DataEngine（调度 `1-DataEngine`）
 
-  - **概述**: 用户说「数据引擎 / 整理数据集 / 预标注 / 图像分类 / YOLO26 / SAM3 / GroundingPI 检测」时触发。本 Skill **只做调度**：确认能力与后端 →（classify / GroundingPI 先探测服务）→ Read 叶包 `.skill` 并执行。GroundingPI 检测或检测+Triton SAM 分割后，默认再走 Qwen 叠图校验（`agent-smart-image` / label_grade）；切 vLLM 前先问用户。当前接线 **organize**、**classify**、**yolo26**、**sam3**、**groundingpi**（DetSeg）。旧说法「Qwen 检测」改走 GroundingPI。
-  - **日期**: 2026-11-10
+  - **概述**: 用户说「数据引擎 / 整理数据集 / 预标注 / 图像分类 / YOLO26 / SAM3 / GroundingPI 检测」时触发。本 Skill **只做调度**：确认能力与后端 →（classify / GroundingPI 先探测服务）→ Read 叶包 `.skill` 并执行。**职责到出框为止**：质检、过滤、落盘 `jsons-det-pre` / `jsons-seg-pre` 归 `agent-smart-image`，出框完交回组长。当前接线 **organize**、**classify**、**yolo26**、**sam3**、**groundingpi**（DetSeg）。旧说法「Qwen 检测」改走 GroundingPI。
+  - **日期**: 2026-11-24
 
 ---
 
@@ -24,7 +23,7 @@ description: >-
   - **模型服务**：`REPO/server/config/vllm_server.json`、`REPO/server/config/sam.json`。classify 与 groundingpi 必须先 [§2.1] 探测通过。GroundingPI 不通时按该节在服务器拉起，不改走别的 vLLM。Agent 自己开关的服务记在 `REPO/server/ledger/runs.md`。organize / yolo26 / sam3 不探测。
   - **数据根目录 `data_root`**：必须由用户给出，**禁止猜测**。
   - **进度台账**：无 customer 票时 `<data_root>/draft/todo-dataengine.md`。有客户票时以该票 `todo.md` 为准，不要在数据集 draft 再写一份。
-  - **不做**：不落地 `4-Agent-label/`；不训练、不金字塔、不基类互补（互补 → `customer/image-260827-class-complement/` 流程；实单如 `image-261020-smartcity-complement/`。开单先请用户把矩阵贴进该票 `require/require.md` 的「## 互补矩阵」）。识图、叠图质检转 `agent-smart-image`（GroundingPI 后的默认校验见 [§2.2]）。按理解改掩膜/框暂不做。label_grade 不改原 LabelMe；去掉误检只在本调度写 `jsons-det-pre` / `jsons-seg-pre` 时做。
+  - **不做**：不落地 `4-Agent-label/`；不训练、不金字塔、不基类互补（互补 → `customer/image-260827-class-complement/` 流程；实单如 `image-261020-smartcity-complement/`。开单先请用户把矩阵贴进该票 `require/require.md` 的「## 互补矩阵」）。**质检、过滤、补标、落盘 `jsons-det-pre` / `jsons-seg-pre` 都归 `agent-smart-image`**，本技能出框即止，见 [§2.2]。
   - **写回边界**：预标/分类只写叶声明的 draft 与 `jsons-det-pre` 等，**不写回**正式 `jsons/` / `labels/`，除非用户另开整理或合并。`capability=organize` 按叶规范写 `labels/`、`train.txt` 等训练文件。
 
   当前可调度（未接线的行：**停**，不要用别的叶顶替）：
@@ -36,8 +35,7 @@ description: >-
   | 检测/分割 | `yolo26` | `DE_ROOT/2-Image-DetSeg/yolo26/` | **已接线** |
   | 检测/分割 | `sam3` | `DE_ROOT/2-Image-DetSeg/sam3/` | **已接线** |
   | 检测/分割 | `groundingpi` | `DE_ROOT/2-Image-DetSeg/groundingpi/` | **已接线** |
-  | 检测/分割 | `qwen` | `DE_ROOT/2-Image-DetSeg/qwen/` | 未接线（改走 groundingpi） |
-  | 图像理解 / 误检过滤 | `qwen` | `0-General/0-SmartImage/` | 走 `agent-smart-image`。adjust 由该叶按补标链重出 |
+  | 图像理解 / 误检过滤 / 定档 / 补标 / 落盘 | `qwen` | `0-General/0-SmartImage/` | 不属本技能，走 `agent-smart-image`。本技能出框后交回组长 |
   | GD | YOLOE / SAM3 / QWEN | `3-GD-*` / `4-GD-*` / `5-GD-*` | 未接线 |
 
 ---
@@ -69,7 +67,7 @@ description: >-
     - **data_root**: /path/to/data
     - **work_dir**: tools/1-DataEngine/...
     - **task**: detect | segment | classify
-    - **phase**: route | probe | confirm | sample | run | overlay | deliver
+    - **phase**: route | probe | confirm | sample | run | handoff | deliver
     - **current**: ...
     - **next**: ...
     - **blocked**: 无
@@ -89,7 +87,7 @@ description: >-
     - [ ] §2.1 探测服务（classify / groundingpi；organize 跳过）
     - [ ] §3 确认后 Read 叶 Skill
     - [ ] 叶步骤
-    - [ ] §2.2 GroundingPI 后 Qwen 校验（默认链式，中途不问）
+    - [ ] §2.2 出框后交回组长（质检与落盘归 smart_image）
     - [ ] §5 交付
 
     ## Notes
@@ -104,12 +102,12 @@ description: >-
   **(2)** 图像分类 / 二分类 / 多分类 / classify → `capability=classify`，`backend=qwen`，`leaf=classify`，`work_dir=DE_ROOT/1-Image-Classify/qwen`。
   **(3)** YOLO26 / yolo 出框 / 权重推理打框 → `capability=detseg`，`backend=yolo26`。
   **(4)** SAM3 / sam3 出框 / 文本提示分割 → `capability=detseg`，`backend=sam3`。
-  **(5)** GroundingPI 检测/分割、给框预标、以及旧说法「Qwen 检测/分割」→ `capability=detseg`，`backend=groundingpi`，`work_dir=DE_ROOT/2-Image-DetSeg/groundingpi`。不要再调度 `2-Image-DetSeg/qwen`。
+  **(5)** GroundingPI 检测/分割、给框预标、以及旧说法「Qwen 检测/分割」→ `capability=detseg`，`backend=groundingpi`，`work_dir=DE_ROOT/2-Image-DetSeg/groundingpi`。检测/分割只有 groundingpi、yolo26、sam3 三个叶，旧的 qwen 叶已删除。
   **(6)** 只说「预标注 / 标一下」且没点名后端 → 默认 `capability=detseg`，`backend=groundingpi`，`task=detect`。用户点名 yolo26、sam3 或 segment 时按点名走。只说「数据引擎」且没指定能力 → 列出 **organize / classify / detseg**，未选则停。
-  **(7)** 识图、描述、图像理解、误检过滤、叠图质检 → 转 `agent-smart-image`（`tools/0-General/0-SmartImage`）。改掩膜、改框 → 停。GD 引擎 → 未接线，停。
+  **(7)** 识图、描述、图像理解、误检过滤、叠图质检、定档、补标、adjust 改形 → 全部转 `agent-smart-image`（`tools/0-General/0-SmartImage`），本技能不接手。GD 引擎 → 未接线，停。
   **(8)** 「autolabel / 4-Agent-label」→ 过时，改走本调度；不要落地 `4-Agent-label/`。
 
-  classify 与 groundingpi → [§2.1]；organize / yolo26 / sam3 → `phase=confirm`。GroundingPI 出框后默认链式走 [§2.2]，中途不要为切 Qwen 再停下来问。
+  classify 与 groundingpi → [§2.1]；organize / yolo26 / sam3 → `phase=confirm`。出框完成后走 [§2.2] 交回组长，不要自己接线做定档。
 
 ### 2.1 探测模型服务（classify / groundingpi，未通过不得进叶）
 
@@ -134,14 +132,14 @@ description: >-
 
   organize / yolo26 / sam3 **跳过**本节。
 
-### 2.2 GroundingPI 后默认 Qwen 校验
+### 2.2 出框后交回组长
 
-  GroundingPI **detect**（矩形）或 **detect + Triton SAM segment**（多边形）完成后，默认立刻切 Qwen 做叠图质检，再按 `grade` 落盘。这是一条链，**中途不要为切服务、看 vis、是否全量再问一遍**。yolo26 / sam3 不默认跟。用户开跑时说「跳过校验 / 不要 Qwen」才跳过。
+GroundingPI **detect**（矩形）或 **detect + Triton SAM segment**（多边形）完成，本技能的工作就结束了。**质检、过滤、写 `jsons-det-pre` / `jsons-seg-pre` 都归 `agent-smart_image`**，不在本技能里做。
 
-  **(1)** 切服务不必再问。默认机 GroundingPI（8082）与 Qwen（8081）通常不能同时占满 GPU：出框结束 → 停 GroundingPI → 按 README 开 default Qwen（当前 Qwen3.8-27B / 8081）→ 改 `server/ledger/runs.md`（`by=agent`，本链上的 Qwen 记 `user_requested=no`）→ `probe.py --skip-sam` 通过。不要用 GroundingPI 当识图后端。label_grade 不测 SAM。
-  **(2)** 执行：Read `skills/agent-smart_image/SKILL.md` 与 `0-General/0-SmartImage/.skill/SKILL.md`。`label_grade.py --mode instance`。变化检测加 `--masks`。产物在 `draft/overlay/`：`model/` 发给模型的裁图，`vis/` 给人看的整图和 `summary.md`，`result/` 是判定 json。`wrong` 和 `adjust` 的裁图同时抄到 `draft/to_check/<类别>/wrong` 与 `adjust`。变化检测另抄 `fit`。叶包不删框。图很少（sample 已覆盖全量）或用户已说连起来 → sample 之后直接校验并写 `jsons-det-pre` / `jsons-seg-pre`，不要等「直接全量」。已有其它类框则合并，只替换本轮类别，禁止无故 `--force` 整文件冲掉。
-  **(3)** 过滤：框和掩膜都只去掉 `grade=wrong`。`fit` 和 `adjust` 都保留。`adjust` 表示目标在但区域过大、不完整或错位，本步不改形状。旧结果没有 `grade` 时，`fit=miss` 或 `verdict=wrong` 当误检去掉。Qwen 写「起重机」却判 fit 这类自相矛盾按误检去掉。
-  **(4)** 一次汇报 vis 路径、`draft/to_check/`、fit/adjust/wrong 和落盘计数。台账 `phase=overlay` 再 `deliver`。
+  **(1)** 出框完只汇报叶的产物：临时目录、框数、`sample` 的 vis 路径。台账 `phase=run`。
+  **(2)** 交回组长，写明「预标已出框，下一步需定档 + 过滤 + 落盘」。组长派 `data-engineer` 走 `agent-smart_image`。
+  **(3)** 若用户开跑时就说了「连起来 / 标完就校验」，仍按 (1)(2) 交回，不要自己接手定档。技能边界不因一句话改变，链条由组长串。
+  **(4)** 本技能不再读 `agent-smart_image` 的说明，也不调 `label_grade.py` / `label_filter.py`。需要这些能力就走 `agent-smart_image`。
 
 ---
 
@@ -167,7 +165,7 @@ description: >-
   - sam3 必须 `--prompt`；缺 `sam3.pt` 把百度云链接给用户。
   - classify / groundingpi **不下模型**；叶只 check 环境。GroundingPI 请求须 `skip_special_tokens=false`（叶客户端已带）。
   - 预标不写正式 `jsons/` / `labels/`（整理叶除外）。
-  - GroundingPI 出框后走 [§2.2] 链式校验，中途不问切服务。label_grade 不改原 json，过滤由本调度落盘。
+  - 出框后走 [§2.2] 交回组长。质检、过滤、落盘 `jsons-det-pre` / `jsons-seg-pre` 由 `agent-smart_image` 做，本技能不碰。
 
 ---
 
@@ -183,7 +181,7 @@ description: >-
 ## 5 交付
 
   **(1)** 摘要：`capability`、`backend`、路径与计数。
-  **(2)** 预标/分类：声明未写正式 `jsons/` / `labels/`。GroundingPI 若做了 §2.2，写出校验计数与过滤后的 `jsons-det-pre` / `jsons-seg-pre`。organize：列出已写的 `labels/`、`train.txt`、`val.txt`、`train_segm.json` 等。
+  **(2)** 预标/分类：声明未写正式 `jsons/` / `labels/`。预标只交出框产物与临时目录，质检和落盘由 `agent-smart_image` 接，本技能不写 `jsons-det-pre` / `jsons-seg-pre`。organize：列出已写的 `labels/`、`train.txt`、`val.txt`、`train_segm.json` 等。
   **(3)** 台账：`phase=deliver`。
 
 ---
@@ -206,8 +204,7 @@ description: >-
   | 入口 | `2-Image-DetSeg/sam3/util/batch_prelabel_json.py` | sample / run |
   | 叶 | `2-Image-DetSeg/groundingpi/.skill/SKILL.md` | GroundingPI detseg |
   | 入口 | `2-Image-DetSeg/groundingpi/util/detect_segment.py` | sample / run |
-  | 校验 | `skills/agent-smart_image/SKILL.md` | GroundingPI 后默认 Qwen 叠图质检 |
-  | 入口 | `0-General/0-SmartImage/util/label_grade.py` | grade=fit|adjust|wrong；不改原标注 |
+  | 交接 | `skills/agent-smart_image/SKILL.md` | 出框后质检、过滤、落盘归该技能，本技能只交回组长 |
   | 权重 | `_weights/` | yolo26 / sam3（classify 与 groundingpi 不用） |
   | 台账 | `<data_root>/draft/todo-dataengine.md` | 断点续跑 |
   | 台账 | `server/ledger/runs.md` | Agent 自己开关的 vLLM |
