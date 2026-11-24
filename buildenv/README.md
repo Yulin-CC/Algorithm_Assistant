@@ -52,27 +52,54 @@
 
 ## 3 蓝图清单
 
+目录按服务器的 `1-project` 分，和 `workarea/env-*/projects.md` 的读法一致。
+
 状态说明：
 - ✅ 有规范化仓库地址，直接 clone
 - 📄 用官方 GitHub 源码即可，几乎无改动
 - 📦 有改动，需要本地压缩包
 
+### 视觉语言 `0-VLM`
+
 | 仓 | 类型 | 源码 | 状态 |
 | --- | --- | --- | --- |
-| [Qwen3-VL](qwen3-vl.md) | VLM | `github.com/Yulin-CC/Qwen3-VL` | ✅ |
-| [YOLO26](yolo26.md) | 检测 | `github.com/Yulin-CC/YOLO26` | ✅ |
-| [SAM-CD](samcd.md) | 变化检测 | `github.com/Yulin-CC/SAM-CD` | ✅ |
-| [YOLOE](yoloe.md) | 检测 / 开集分割 | `github.com/Yulin-CC/YOLOE` | 📄 |
-| [SAM3](sam3.md) | 分割 | `github.com/Yulin-CC/SAM3` | 📄 |
-| [SAM3-I](sam3-i.md) | 分割（交互式） | `github.com/debby-0527/SAM3-I` | 📄 |
-| [FastSAM](fastsam.md) | 分割 | `github.com/CASIA-IVA-Lab/FastSAM` | 📄 |
-| [GroundingDINO](groundingdino.md) | 开放集检测 | `github.com/longzw1997/Open-GroundingDino` | 📄 |
-| [LocateAnything](locateanything.md) | 视觉定位 | `huggingface.co/nvidia/LocateAnything-3B` | 📄 |
-| [nanochat](nanochat.md) | LLM | `github.com/karpathy/nanochat` | 📄 |
-| [vLLM](vllm.md) | 推理框架 | `github.com/vllm-project/vllm` | 📄 |
-| [Triton SAM](triton-sam.md) | 分割服务 | 无地址，Docker 自建 | ❓ |
+| [vLLM](0-VLM/vllm.md) | 推理框架 | `github.com/vllm-project/vllm` | 📄 |
+| [Qwen3-VL](0-VLM/qwen3-vl.md) | VLM | `github.com/Yulin-CC/Qwen3-VL` | ✅ |
+| [LocateAnything](0-VLM/locateanything.md) | 视觉定位 | `huggingface.co/nvidia/LocateAnything-3B` | 📄 |
+| [YOLOE](0-VLM/yoloe.md) | 检测 / 开集分割 | `github.com/Yulin-CC/YOLOE` | 📄 |
+| [nanochat](0-VLM/nanochat.md) | LLM | `github.com/karpathy/nanochat` | 📄 |
+| [GroundingDINO](0-VLM/groundingdino.md) | 开放集检测 | `github.com/longzw1997/Open-GroundingDino` | 📄 |
+| [Triton SAM](0-VLM/triton-sam.md) | 分割服务 | 无地址，Docker 自建 | ❓ |
+| [SAM3](0-VLM/sam3.md) | 分割 | `github.com/Yulin-CC/SAM3` | 📄 |
+| [SAM3-I](0-VLM/sam3-i.md) | 分割（交互式） | `github.com/debby-0527/SAM3-I` | 📄 |
+| [FastSAM](0-VLM/fastsam.md) | 分割 | `github.com/CASIA-IVA-Lab/FastSAM` | 📄 |
 
-还没写的：`SCM`、`GEOLabeling`、`Agent-DEMO`，这三个需要本地压缩包（📦）。
+### 检测 `2-YOLO`
+
+| 仓 | 类型 | 源码 | 状态 |
+| --- | --- | --- | --- |
+| [YOLO26](2-YOLO/yolo26.md) | 检测 | `github.com/Yulin-CC/YOLO26` | ✅ |
+
+### 任务 `3-TASK`
+
+| 仓 | 类型 | 源码 | 状态 |
+| --- | --- | --- | --- |
+| [SAM-CD](3-TASK/samcd.md) | 变化检测 | `github.com/Yulin-CC/SAM-CD` | ✅ |
+
+还没写的：`SCM`、`GEOLabeling`、`Agent-DEMO`，这三个需要本地压缩包（📦）。见 [todo.md](todo.md)。
+
+## 3.1 目录怎么分
+
+```
+buildenv/
+├── README.md          # 本文件
+├── todo.md            # 还没写的蓝图
+├── 0-VLM/             # 视觉语言
+├── 2-YOLO/            # 检测
+└── 3-TASK/            # 任务（变化检测等）
+```
+
+目录名与服务器 `1-project` 的顶层一致。新仓按它所属的目录放进去。
 
 ## 4 和 `workarea/` 的区别
 
