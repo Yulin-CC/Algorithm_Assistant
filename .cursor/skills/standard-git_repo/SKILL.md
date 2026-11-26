@@ -194,15 +194,33 @@ description: >-
   **(1)** 关于 `warning: LF will be replaced by CRLF`：
 
   - 本机 `core.autocrlf=true`，首次提交几乎每个文本文件都会打这条。属正常，不影响历史内容。
-  - 但跨机协作（服务器上跑 Linux）时，同一条警告意味着同一个文件在两台机器上会来回显示为「已修改」。要避免就写 `.gitattributes`：
+  - 但跨机协作（服务器上跑 Linux）时，同一条警告意味着同一个文件在两台机器上会来回显示为「已修改」。这类仓必须写 `.gitattributes`，把行尾固定下来：
 
     ```gitattributes
+    # 统一文本判定与行尾
     * text=auto eol=lf
+
+    # Windows 专用脚本保留 CRLF
     *.bat text eol=crlf
+    *.cmd text eol=crlf
     *.ps1 text eol=crlf
+
+    # 二进制不做转换
+    *.png binary
+    *.jpg binary
+    *.pt binary
+    *.onnx binary
+    *.zip binary
     ```
 
-  - 这一条按仓库实际情况决定，不要无脑加。纯 Windows 的仓不用管。
+  - 加了之后要跑一次 `git add --renormalize .`，把已跟踪文件按新规则重写。**先看 `git status --short` 和 `git diff --cached --numstat`**：纯行尾转换的特征是每个文件的增删行数相等（如 `341 341`）。若某文件增删不等，说明内容也变了，得单独查。这类提交单独一条，不要和功能改动混在一起。
+  - 中文文件名在 `git status` 里显示成 `"\345\274\200\345\217\221..."` 时，是这个仓没关 `core.quotepath`。设一次即可：
+
+    ```powershell
+    git config core.quotepath false
+    ```
+
+  - 纯 Windows 的仓不用 `.gitattributes`；但只要服务器上也提交，就一定要。
 
   **(2)** 提交后再核一遍，四件事都要成立：
 
@@ -342,9 +360,11 @@ description: >-
 
   | 检查 | 要替换 | 不替换 |
   | ---- | ------ | ------ |
-  | 本机路径 | 绝对路径（`/home/...`、`/data/...`）、`~`、盘符（`C:\`、`/path/to/PATH`）、指向仓库外数据或环境的相对路径 | `util/app.py` 这类仓库内相对路径 |
+  | 本机路径 | 绝对路径（`/home/...`、`/data/...`）、`~`、盘符（`C:\`、`Z:\`）、指向仓库外数据或环境的相对路径 | `util/app.py` 这类仓库内相对路径 |
   | IP | 具体 IPv4 / IPv6，含写在 URL 里的 | `0.0.0.0`、`127.0.0.1` |
   | Token / Key | `api_key`、`token`、`secret`、`password` 的赋值；`ghp_`、`github_pat_`、`glpat-`、`sk-`、`AKIA`、`Bearer` 等前缀 | 文档里的占位符本身（`<token>`、`<api-key>`） |
+
+  - **代码里的路径白名单是例外，保留真值**。像 `tools/0-General/1-LocalMachine/util/paths.py` 里 `Path("/path/to/data")` 这种，是程序运行要读的默认根，改成占位符会让代码直接失效；它也不是「文档里的机器信息」。判断口径：**写给人看的路径要脱敏，写给程序读的路径保留**。同一类文件在 `.skill/SKILL.md` 的说明里引用同一个值，也一并保留，并在技能里写明这条例外。
 
     ```powershell
     $EX = @('-g','!z-others/**','-g','!third_party/**','-g','!.git/**','-g','!customer/**','-g','!agents/TeamLeader/**','-g','!tmp/**')
@@ -367,7 +387,7 @@ description: >-
   | ---- | -------------- | ---------- |
   | conda | `source /path/to/home/miniconda3/etc/profile.d/conda.sh` | `source /path/to/miniconda3/etc/profile.d/conda.sh` |
   | 脚本数据路径 | `dataset="/path/to/home/0-data/..."` | `dataset="/path/to/dataset"` |
-  | 其它本机路径 | `/path/to/home/...`、`/data/...`、`/path/to/PATH` | `/path/to/...` |
+  | 其它本机路径 | `/path/to/home/...`、`/data/...`、`Z:\...` | `/path/to/...` |
   | IP / 服务地址 | `http://192.168.1.10:8081/v1` | `http://<ip>:8081/v1` |
   | Token / Key | 真实密钥字符串 | `<token>` 或 `<api-key>` |
   | 密码 | 真实密码 | `<password>` |
@@ -592,7 +612,31 @@ description: >-
   - **禁止** `git add .` / `git add -A`。按文件名加入。原因是 §5.3：含本机值的文件提交后磁盘上是原值、HEAD 是占位符，`git status` 里永远显示「已修改」，一个 `git add .` 就把本机路径和密钥重新送进仓库。
   - 一次提交只说一件事：搬文件、改行为、改格式分三次。
 
-### 8.2 回滚分三级（从轻到重）
+### 8.2 提交信息
+
+  - 格式固定为 `<类型>: <做了什么>`。类型只用这一组：`feat` / `fix` / `docs` / `chore` / `refactor` / `test` / `style` / `perf` / `build` / `ci`。
+  - 中英文皆可，但**类型前缀不能省**。省了之后 `git log` 没法按类型筛，也没法一眼看出哪条是功能、哪条是整理。
+  - 自查命令，返回非空就是有漏的：
+
+    ```powershell
+    git log --format="%h %s" | Select-String -NotMatch '^[0-9a-f]+ (feat|fix|docs|chore|refactor|test|style|perf|build|ci)(\(.+\))?: '
+    ```
+
+  - 正文说清**为什么改**和**影响什么**，不要只列文件名。用 `-F -` 从 heredoc 读进多行信息，避免 shell 引号吃掉换行：
+
+    ```powershell
+    git commit -F - <<'MSG'
+    refactor: 服务目录归位，启动与端口解耦
+
+    - 端口与模型名归 server/，启动脚本归 workarea/link.md
+    - clients 只读 config，不再硬编码地址
+    MSG
+    ```
+
+  - **注意**：`git commit -m "a
+b"` 在 PowerShell 里换行会被吃掉，多行一定用 `-F -`。
+
+### 8.3 回滚分三级（从轻到重）
 
     ```powershell
     git checkout -- <file>        # ① 单个文件回到上次提交
@@ -619,6 +663,8 @@ description: >-
   - [ ] 单个 > 5MB 的文件已排除或走 LFS
   - [ ] 分支是 `main`，`git log --oneline` 至少一条基线提交
   - [ ] 带密钥的配置有 `.example` 模板进库，实体文件被忽略
+  - [ ] 服务器也会提交的仓：有 `.gitattributes`，且 `git config core.quotepath` 为 `false`
+  - [ ] `git log --format="%s"` 里每条都带类型前缀
 
 ### 9.2 推远程
 
