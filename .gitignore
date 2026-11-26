@@ -1,7 +1,13 @@
+# 运行产物
 tmp/
 _tmp/
 **/__pycache__/
 *.pyc
-.cursor/agents/TeamLeader/room.md
-.cursor/agents/TeamLeader/online.json
+
+# 客户票与房间运行态（具体文件名见各子目录 .gitignore）
+customer/
 .cursor/customer/
+room.md
+online.json
+.room.lock
+online.json.tmp
