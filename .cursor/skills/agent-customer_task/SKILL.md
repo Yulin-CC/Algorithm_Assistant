@@ -235,8 +235,8 @@ description: >-
     | 依赖 | — |
     | 本机 | `/path/to/data\1-ChangeDetect\2-FieldChange\toclean\<已确认的 GEOAI-…>` |
     | 远端 | 待确认 |
-    | 技能 | `skills/tool-remote` |
-    | 做法 | 按 tool-remote 上传并核对张数。路径加引号 |
+    | 技能 | `skills/tool-remote_link` |
+    | 做法 | 按 tool-remote_link 上传并核对张数。路径加引号 |
     | 交付 | 远端同名目录，A / B 张数与本机表一致 |
     | 成功 | `ls` 对上 §1 点名的那几套 |
 

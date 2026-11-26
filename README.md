@@ -65,7 +65,7 @@ Agent 会询问你以下相关事项
 1. **写地图** —— 按你给的根展开 `workarea/env-local/`。数据按「到数据集」停，项目只到仓库一层。
 2. **探服务器** —— 要连服务器时先做密钥探测，用 `BatchMode`，**不向你要密码**。`link.md` 的确认列还是「待确认」时，不把它当成你已经点头。
 3. **请你过一眼** —— 把 `workarea/README.md` 摊开给你看，等你点头。点头之后，才把 `link.md` 里的启动脚本写进 `.cursor/server/ledger/runs.md`。
-4. **探服务** —— 在 `.cursor` 下跑 `py -3 server/util/probe.py`，按条记进 `server/README.md` 与 `server/services/`。没起来的只登记、不擅自搭，**Windows 不起 vLLM / SAM**。服务固定是 Qwen / GroundingPI / Triton SAM 那几个，初始化只更新端口、API 和现状，不动 `server/env_building.md`。
+4. **探服务** —— 在 `.cursor` 下跑 `py -3 server/util/probe.py`，按条记进 `server/README.md` 与 `server/services/`。没起来的只登记、不擅自搭，**Windows 不起 vLLM / SAM**。服务固定是 Qwen / GroundingPI / Triton SAM 那几个，初始化只更新端口、API 和现状；装法在仓库根 `buildenv/0-VLM/`，初始化不动它。
 5. **最后问两项** —— 要不要顺手整理某个算法仓、缺的服务现在搭不搭。**说「先不做」就跳过，跳过同样算完成。**
 
 ### 0.3 怎么算初始化好了
@@ -101,9 +101,9 @@ Agent 会询问你以下相关事项
 ./
 ├── README.md                         # 本文件
 ├── 开发日志.md                        # 每次迭代改了什么、为什么
-├── buildenv/                         # 施工蓝图：每个算法仓怎么从零搭起来
+├── buildenv/                         # 施工蓝图：每个算法仓、每种服务怎么从零搭起来
 │   ├── README.md                     # 索引与写法
-│   ├── yoloe.md
+│   ├── 0-VLM/vllm.md                 # Qwen 与 GroundingPI 共用的 vLLM
 │   └── ...
 ├── workarea/                         # 这台机器的工作地图。克隆下来是待确认
 │   ├── link.md                       # 主机、目录、启动脚本、权重目录
@@ -114,7 +114,7 @@ Agent 会询问你以下相关事项
     ├── skills/                       # 何时唤起、怎么确认
     ├── agents/                       # 五名工程师；TeamLeader 是组长房间
     ├── tools/                        # 叶子脚本
-    ├── server/                       # 服务端口、模型名、装法、台账
+    ├── server/                       # 服务端口、模型名、客户端、台账（装法在 buildenv）
     └── customer/                     # 客户票。本快照不含，开票后才有
 ```
 
@@ -242,8 +242,8 @@ flowchart TD
 | 层 | 数量 | 入口 |
 | --- | --- | --- |
 | 🎯 调度 | 6 | 数据引擎、开票、金字塔、识图、三槽训练、源码适配 |
-| 📐 规范 | 9 | README、git 首页、脚本、skill、数据集合并、叶子闸门、项目合并、Agent-demo、QuickStart |
-| 🔧 工具 | 5 | 改标签、装环境、推远程仓、弱标签、SSH |
+| 📐 规范 | 10 | README、git 首页、脚本、skill、数据集合并、叶子闸门、项目合并、Agent-demo、QuickStart、git 仓库 |
+| 🔧 工具 | 4 | 改标签、装环境、弱标签、SSH |
 
 文件夹用下划线，YAML `name` 用连字符，例如 `agent-smart_image` 对应 name `agent-smart-image`。
 

@@ -25,7 +25,7 @@ description: >-
   - `REPO/skills/agent-auto_demo/SKILL.md`（确认 Customer 前不得开跑）。派工须写明工作区「已齐」或「已构建」；没有这句，或盘上对不上，停回组长。不向用户再问构建或跳过，不自己建槽。YOLOE 票目录按该技能 [§3.1]，不要在槽根补 `customer/`，也不要把超参写回 `data/train_colorcar.yaml`。
   - 建三槽、写 `0-Agent-demo/SKILL.md` 归运维（`standard-project_agentdemo`）。本工种不建槽。缺了交回组长派运维。
   - 派工写明源码适配时，改读 `REPO/skills/agent-source_adapt/SKILL.md`。不进三槽，不开训。没写仓库、上游 commit、功能名、成功标准就停回组长。
-  - SSH：`REPO/skills/tool-remote/SKILL.md`。缺 Python 环境停回组长，按常驻规则「交接」办。
+  - SSH：`REPO/skills/tool-remote_link/SKILL.md`。缺 Python 环境停回组长，按常驻规则「交接」办。
 
 ## 3 禁止
 

@@ -65,4 +65,4 @@ GroundingPI 把坐标输出成 `<0>`…`<999>` 这种量化 token。请求里如
 
 ## 5 现状
 
-在哪台机器跑、PID、日志，看 `ledger/runs.md`。装法看 [env_building](../env_building.md)。
+在哪台机器跑、PID、日志，看 `ledger/runs.md`。装法与权重来源看 [buildenv/0-VLM/vllm.md](../../../buildenv/0-VLM/vllm.md) §4.4。

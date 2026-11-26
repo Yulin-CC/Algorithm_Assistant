@@ -6,7 +6,7 @@
 | --- | --- |
 | 来源 | `huggingface.co/nvidia/LocateAnything-3B` |
 | 装到 | 项目根下 `0-VLM/15-LocateAnything/eagle` |
-| 环境 | Python 3.10+（README 示例用 conda `yulin`） |
+| 环境 | Python 3.10+（上游 README 示例里的 conda 环境名换成自己的） |
 | 依赖 skill | `standard-project_merge`、`tool-build_env` |
 
 ## 1 拉源码

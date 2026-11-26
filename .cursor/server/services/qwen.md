@@ -49,4 +49,4 @@ curl -s http://<host>:8081/v1/chat/completions \
 
 ## 4 现状
 
-在哪台机器跑、PID、日志，看 `ledger/runs.md`。装法看 [env_building](../env_building.md)。
+在哪台机器跑、PID、日志，看 `ledger/runs.md`。装法与权重来源看 [buildenv/0-VLM/vllm.md](../../../buildenv/0-VLM/vllm.md)。

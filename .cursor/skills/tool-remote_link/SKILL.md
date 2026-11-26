@@ -1,5 +1,5 @@
 ---
-name: remote-106-75-214-73
+name: tool-remote-link
 description: >-
   Operate local Windows against remote Ubuntu via SSH key / BatchMode.
   Default host is whatever workarea/link.md records for this checkout, currently
@@ -90,7 +90,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=15 ubuntu@<HOST> 'echo OK && hostname && 
 2. 确认完整后立刻删临时包（本地 + 远端）
 3. 大体量（本地放不下整包）→ 用**方案 B 流式**，禁止先打满盘的本地大包
 
-**禁止**：未经用户明确同意，移动/删除/改写 `Y:\算法样本库\`（团队备份）。
+**禁止**：未经用户明确同意，移动/删除/改写 `/path/to/PATH`（团队备份）。
 
 ## Upload strategies
 

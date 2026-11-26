@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>三层技术结构</title>
+  <style>
+    :root {
+      --background: #f7f7f5;
+      --foreground: #1c1c1a;
+      --card: #ffffff;
+      --muted-foreground: #6b6b66;
+      --border: #e4e4e0;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #1c1c1a;
+        --foreground: #f2f2ee;
+        --card: #262624;
+        --muted-foreground: #a3a39c;
+        --border: #3a3a36;
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 400;
+    }
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted-foreground);
+      font-size: 13px;
+    }
+    #aa-structure { container-type: inline-size; margin-top: 20px; }
+    .aa-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) 4.75rem minmax(0, 0.95fr);
+      grid-template-areas:
+        "user . ."
+        "l2 read l3"
+        "call . ."
+        "l1 l1 l1"
+        "out out out";
+      gap: 12px;
+      align-items: center;
+    }
+    .aa-board > * { min-width: 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--muted-foreground);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .aa-user {
+      grid-area: user;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .aa-person {
+      min-width: 6rem;
+      text-align: center;
+      border-color: var(--foreground);
+    }
+    .aa-shell {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-width: 1.5px;
+      border-color: var(--foreground);
+      background: var(--background);
+    }
+    .aa-title { font-weight: 500; }
+    .muted {
+      color: var(--muted-foreground);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .aa-chips,
+    .aa-roles {
+      display: grid;
+      gap: 8px;
+    }
+    .aa-chips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .aa-roles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .aa-pair {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+      gap: 8px;
+    }
+    .aa-quad {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+    .aa-base { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .aa-vlink,
+    .aa-read {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--muted-foreground);
+    }
+    .aa-vlink span,
+    .aa-read span { white-space: nowrap; }
+    .aa-read { flex-direction: row; }
+    .aa-vlink svg,
+    .aa-read svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+    .aa-read svg.aa-narrow-only { display: none; }
+    .aa-out {
+      grid-area: out;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    @container (max-width: 560px) {
+      .aa-board {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+          "user"
+          "l2"
+          "read"
+          "l3"
+          "call"
+          "l1"
+          "out";
+      }
+      .aa-base,
+      .aa-pair,
+      .aa-chips { grid-template-columns: minmax(0, 1fr); }
+      .aa-roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .aa-read svg.aa-wide-only { display: none; }
+      .aa-read svg.aa-narrow-only { display: block; }
+      .aa-read { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <p class="sr-only">三层技术结构。第一层是规范与工具，铺在底部。第二层是组长和五名工程师，用户对组长说意图。第三层是工作地图和习惯画像，由组长读取。</p>
+    <h1>三层技术结构</h1>
+    <span class="subtitle">手艺在下，画像在旁</span>
+    <div id="aa-structure">
+      <div class="aa-board">
+        <div class="aa-user">
+          <div class="card aa-person">用户</div>
+          <div class="aa-vlink">
+            <span class="muted">说意图</span>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <section class="card aa-shell" aria-label="第二层 分工与调度" style="grid-area: l2">
+          <div class="aa-title">第二层 · 分工与调度</div>
+          <div class="card">
+            <div>组长</div>
+            <div class="muted">听意图 · 派工 · 汇总</div>
+          </div>
+          <div class="aa-roles">
+            <div class="card">
+              <div>项目</div>
+              <div class="muted">拆长任务</div>
+            </div>
+            <div class="card">
+              <div>数据</div>
+              <div class="muted">整理预标</div>
+            </div>
+            <div class="card">
+              <div>模型</div>
+              <div class="muted">训练推理</div>
+            </div>
+            <div class="card">
+              <div>测试</div>
+              <div class="muted">报告定档</div>
+            </div>
+            <div class="card">
+              <div>运维</div>
+              <div class="muted">环境卡点</div>
+            </div>
+          </div>
+          <div class="aa-pair">
+            <div class="card">
+              <div>调度技能</div>
+              <div class="muted">数据引擎 · 开票 · 金字塔 · 识图 · 三槽 · 源码适配</div>
+            </div>
+            <div class="card">
+              <div>组长房间</div>
+              <div class="muted">等做完 · 同卡先说</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="aa-read" style="grid-area: read">
+          <svg class="aa-wide-only" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 4L6 8l4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="muted">读取</span>
+          <svg class="aa-narrow-only" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <section class="card aa-shell" aria-label="第三层 环境与画像" style="grid-area: l3">
+          <div class="aa-title">第三层 · 环境与画像</div>
+          <div class="aa-quad">
+            <div class="card">
+              <div>数据根</div>
+              <div class="muted">必须人给</div>
+            </div>
+            <div class="card">
+              <div>项目根</div>
+              <div class="muted">到仓库一层</div>
+            </div>
+            <div class="card">
+              <div>主机与服务</div>
+              <div class="muted">待确认不调用</div>
+            </div>
+            <div class="card">
+              <div>习惯画像</div>
+              <div class="muted">已确认才默认</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="aa-vlink" style="grid-area: call">
+          <span class="muted">按规范调用</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <section class="card aa-shell" aria-label="第一层 规范与工具" style="grid-area: l1">
+          <div class="aa-title">第一层 · 规范与工具</div>
+          <div class="aa-quad aa-base">
+            <div class="card">
+              <div>脚本规范</div>
+              <div class="muted">文件头 · 紧凑写法</div>
+            </div>
+            <div class="card">
+              <div>项目整理规范</div>
+              <div class="muted">合并 · 操作卡 · QuickStart</div>
+            </div>
+            <div class="card">
+              <div>数据格式规范</div>
+              <div class="muted">检测 · 开集 · 变化检测</div>
+            </div>
+            <div class="card">
+              <div>脚本工具</div>
+              <div class="muted">装环境 · 远程 · 改标签 · 弱标签 · 引擎叶子</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="aa-out">
+          <div class="aa-vlink">
+            <span class="muted">产物落盘</span>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="aa-chips">
+            <div class="card">工单进度</div>
+            <div class="card">预标草稿</div>
+            <div class="card">槽内权重</div>
+            <div class="card">测试报告</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

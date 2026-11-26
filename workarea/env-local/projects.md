@@ -1,6 +1,6 @@
 # 📂 本地项目
 
-项目根 `/path/to/project`，2026-11-17 已确认。展开到每个仓库的根：列出直接子目录和散落的压缩包，不进源码，不进 `.git`。
+项目根 `/path/to/home/1-project`，2026-11-17 已确认。展开到每个仓库的根：列出直接子目录和散落的压缩包，不进源码，不进 `.git`。
 
 本机和服务器不是同一套目录。服务器见 [env-<HOST>/projects.md](../env-<HOST>/projects.md)。
 
@@ -62,5 +62,5 @@
 | 路径 | 备注 |
 | --- | --- |
 | `Agent-DEMO` | `README.md`、`pyproject.toml`。目录 `data`、`serve`、`src`、`z-other` |
-| `Algorithm_Assistant` | 就是这份助手。目录 `.cursor`、`workarea`、`_tmp` |
+| `Algorithm_Assistant` | 就是这份助手。目录 `.cursor`、`workarea`、`buildenv`、`tmp` |
 | `Space_solar` | 空目录 |

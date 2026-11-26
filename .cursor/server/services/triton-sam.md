@@ -57,4 +57,4 @@ docker logs -f sam-triton          # 出现 READY 即成功
 
 ## 5 现状
 
-在哪台机器跑、容器状态、日志，看 `ledger/runs.md`。镜像与拉取、ONNX 权重下载看 [env_building](../env_building.md)。
+在哪台机器跑、容器状态、日志，看 `ledger/runs.md`。镜像与拉取、ONNX 权重下载看 [buildenv/0-VLM/triton-sam.md](../../../buildenv/0-VLM/triton-sam.md) §3。

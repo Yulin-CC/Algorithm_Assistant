@@ -31,7 +31,7 @@ pip install pycocotools
 
 ### 3.1 权重
 
-`weights/` 下要有 `sam3.pt`。来源见 `server/env_building.md` 或问团队。
+`weights/` 下要有 `sam3.pt`。仓里没有下载脚本，缺了问团队要（叶说明里提到会给百度云链接）。
 
 ## 4 验证
 

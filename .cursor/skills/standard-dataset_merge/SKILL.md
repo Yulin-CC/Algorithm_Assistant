@@ -44,7 +44,7 @@ description: >-
 
   **(5)** 检查是否已符合目标规范：
 
-  - **a** 查找工具目录：默认 `/path/to/home/1-project/1-PROCESS`；不存在或功能不足时询问用户工具路径。
+  - **a** 工具目录：`REPO/tools/1-DataEngine/0-Data-Organize/util/`（`REPO` 为本工作区 `.cursor/`）。不在该目录里的工具，按 [3 工具索引] 的说明处理；确需外部工具时再询问用户路径。
   - **b** 调用 [3 工具索引] 中对应脚本逐一调整，后台监督执行。
   - **c** 完成后由 Agent 按对应规范的 **检查流程**（§4.1.2 / §4.2.1 / §4.2.2 / §4.3.2 / §4.4.2）做最终核对，向用户报告并打印数据集统计（文件数、train/val 划分等）。
 
@@ -63,31 +63,37 @@ description: >-
 
 ## 3 工具索引
 
-  | 规范 | 工具路径（相对 `1-PROCESS/`） | 用途 |
+  全部在 `REPO/tools/1-DataEngine/0-Data-Organize/util/`（`REPO` = 本工作区 `.cursor/`），解释器见该叶 `.skill/SKILL.md`。旧的 `/path/to/home/1-project/1-PROCESS` 与本表旧写法 `tools/`、`utils/` 均已废弃：服务器上该目录不存在，`cd_dataset_division.py`、`yolo_dataset_division.py` 也从未有过，划分一律用 `split.py`。
+
+  | 规范 | 工具 | 用途 |
   |------|----------|------|
-  | YOLO | `utils/convert_json2txt.py` | Labelme JSON → `labels/`（`detect` / `segment`） |
-  | YOLO | `utils/convert_xml2txt.py` | VOC XML → `labels/` |
-  | YOLO | `utils/convert_labelme2coco.py` | LabelMe → **多类** COCO bbox JSON（供 SAM / `convert_coco2txt`） |
-  | YOLO | `utils/convert_coco2txt.py` | COCO instances JSON → `labels/`（`detect` / `segment`） |
-  | YOLO | `tools/yolo_dataset_division.py` | 生成 `train.txt` / `val.txt` |
-  | YOLOE | `utils/convert_json2coco.py` | `jsons-GD_yoloe/` → `train_segm.json`（默认 `--jsons-dir jsons-GD_yoloe`） |
-  | YOLOE | `utils/convert_geoai2coco.py` | LabelMe `description_en` → caption span，再写入 `train_segm.json` |
+  | YOLO | `convert_json2txt.py --task detect\|segment` | Labelme JSON → `labels/` |
+  | YOLO | `convert_xml2txt.py` | VOC XML → `labels/` |
+  | YOLO | `convert_labelme2coco.py` | LabelMe → **多类** COCO bbox JSON（供 SAM / `convert_coco2txt`） |
+  | YOLO | `convert_coco2txt.py` | COCO instances JSON → `labels/`（`detect` / `segment`） |
+  | YOLO | `convert_txt2json.py` / `convert_txt2xml.py` | YOLO txt → LabelMe / VOC（反向） |
+  | YOLO | `split.py --layout yolo` | 生成 `train.txt` / `val.txt` |
+  | YOLO | `yolo_check_label.py` | 子集类别覆盖表 |
+  | 通用 | `merge_jsons_det_segm.py` | `jsons-det-pre` + `jsons-seg-pre` → `jsons/` |
+  | YOLOE | `convert_json2coco.py` | `jsons-GD_yoloe/` → `train_segm.json`（默认 `--jsons-dir jsons-GD_yoloe`） |
+  | YOLOE | `convert_geoai2coco.py` | LabelMe `description_en` → caption span，再写入 `train_segm.json` |
   | YOLO / YOLOE | `tools/generate_sam_masks.py` | 对 COCO JSON 中的 **bbox** 补 `segmentation`，输出 `*_segm.json` |
-  | YOLOE | `tools/grounding_generate_cache.py` | 由 `train_segm.json` 生成 `train_segm.cache` |
-  | CD 校验 | `tools/cd_register.py` | 双时相配准 → `A_cropped/` `B_cropped/` 等 |
-  | CD 校验 | `tools/cd_image_tiling.py` | 对 cropped 切片 → 输出 `A/` `B/` 子图 |
-  | CD 训练 | `utils/convert_json2mask.py` | json/ → label/ mask |
-  | CD 训练 | `tools/cd_dataset_division.py` | 生成 `train.txt` / `val.txt` |
+  | YOLOE | `grounding_generate_cache.py` | 由 `train_segm.json` 生成 `train_segm.cache` |
+  | CD 校验 | `cd_register.py` | 双时相配准 → `A_cropped/` `B_cropped/` 等 |
+  | CD 校验 | `cd_image_tiling.py` | 对 cropped 切片 → 输出 `A/` `B/` 子图 |
+  | CD 训练 | `convert_json2mask.py` | json/ → label/ mask（仅 polygon；空 shapes 出全 0 png） |
+  | CD 训练 | `split.py --layout cd` | 生成 `train.txt` / `val.txt`（每行文件名，以 A 侧为准） |
+  | 弱标签 | `square_crop.py` / `gt_rectify.py` / `weak_label_report.py` | 见 `skills/tool-gt_rectify/SKILL.md` |
 
   - **注意**：执行前确认 `classes.yaml`（YOLO）等依赖文件是否存在；多子目录/多年份共用**同一份** `names` 顺序，保证 class id 一致。
   - **注意**：`generate_sam_masks.py` 输入是带 **bbox** 的 COCO JSON（`--json-path`）+ `images/`（`--img-path`），**不是** `.cache`。默认权重优先 `yoloe-main/weights/sam2.1_hiera_large.pt`，可用 `--checkpoint` 覆盖；默认 `--gpus 0,1,2,3`。密框图请加 **`--batch`**（单图框很多时按块推理，降低显存峰值）。调用前确认 **sam2** 环境可用。
   - **注意**：`convert_json2coco.py` 默认读 `jsons-GD_yoloe/`。`convert_geoai2coco.py` 仍读 LabelMe `jsons/`，再写成训练 JSON。
-  - **注意**：`tools/grounding_generate_cache.py` **唯一依赖 ultralytics**；调用前须询问用户 **yoloe 环境是否已装好**，确认后在 yoloe 环境中执行：
+  - **注意**：`grounding_generate_cache.py` **唯一依赖 ultralytics**；调用前须询问用户 **yoloe 环境是否已装好**，确认后在 yoloe 环境中执行：
 
     ```bash
     source "$(conda info --base)/etc/profile.d/conda.sh"
     conda activate yoloe
-    python /path/to/home/1-project/1-PROCESS/tools/grounding_generate_cache.py \
+    python "<REPO>/tools/1-DataEngine/0-Data-Organize/util/grounding_generate_cache.py" \
       --json-path /path/to/train_segm.json \
       --img-path /path/to/images
     ```
@@ -252,7 +258,7 @@ description: >-
 
   - 默认假定 `A/`、`B/` 已是校验终态；无则 ❌ 或请用户先走校验分支。
   - 最小合规：`A/`、`B/`、`label/`、`train.txt`、`val.txt`。
-    - 缺 `label/` 或划分文件 → 调用工具生成
+    - 缺 `label/` 或划分文件 → 调用工具生成（mask 用 `convert_json2mask.py`；划分用 `split.py --layout cd`）
   - 有 `json/` → 转 `label/` mask（`convert_json2mask.py`；仅 polygon；扩展字段可选）。
   - 最终：`A/`、`B/`、`label/` basename 一致（label 为 `.png`）；划分列表中文件名三处均有对应 → ✅。
 

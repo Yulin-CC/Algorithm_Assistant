@@ -1,6 +1,6 @@
 # Qwen3-VL
 
-团队整理的 Qwen3-VL 工作流：环境安装、标注、微调、推理与 vLLM 服务。
+团队整理的 Qwen3-VL 工作流：环境安装、标注、微调、推理。
 
 | 项 | 值 |
 | --- | --- |
@@ -10,6 +10,8 @@
 | 依赖 skill | `standard-project_merge`、`tool-build_env` |
 
 官方源码在仓内 `Qwen/`，归档资料在 `z-others/`。
+
+**本篇只管训练这条线。** 起 vLLM 服务、vLLM 装哪个版本、Qwen 权重从哪拉，都在 [vllm.md](vllm.md)——vLLM 是 Qwen 和 GroundingPI 共用的后端。
 
 ## 1 拉源码
 
@@ -41,23 +43,19 @@ pip install -r z-others/requirements.txt
 export MAX_JOBS=24
 export MAKEFLAGS="-j24"
 ulimit -v 67108864
-pip install --no-cache-dir --force-reinstall --no-build-isolation --no-deps \
+nice -n 19 pip install --no-cache-dir --force-reinstall --no-build-isolation --no-deps \
   git+https://github.com/Dao-AILab/flash-attention.git@v2.8.3
 ```
 
-### 3.2 vLLM（服务端需要）
+装完验一下，报错就先卸干净再重来：
 
 ```bash
-export MAX_JOBS=24
-ulimit -v 67108864
-git clone https://github.com/vllm-project/vllm.git
-cd vllm && pip install -e .
-python -c "import vllm; print(vllm.__version__)"
+python -c "import flash_attn; print(flash_attn.__version__)"
+pip uninstall flash-attn -y 2>/dev/null || true
+pip cache purge
 ```
 
-版本要按 glibc 和 CUDA 挑，见 `.cursor/server/env_building.md` §3.1。
-
-### 3.3 uv 备选
+### 3.2 uv 备选
 
 无 conda 时用项目 `.venv`，后续命令一律用 `$PY`。QuickStart 脚本里的 `conda activate qwen` 要改成 `source .venv/bin/activate`。
 
@@ -80,15 +78,17 @@ python -c "import torch; print('torch', torch.__version__); print('cuda', torch.
 ## 5 已知问题
 
 - **`CUDA` 版本选错**：驱动 12.8+ 用 `cu128`，12.4/12.6 用 `cu124`。
-- **vLLM 版本**：PyPI 上 0.22+ 是 CUDA 13 构建，glibc 2.31 的机器只能落 0.19.1。详见 `server/env_building.md` §3.1。
 - **flash-attn 编译**：要设 `MAX_JOBS` 和 `ulimit -v`，否则 OOM。
+- **`max_pixels` / `max_model_len` 调太大**：双卡 24G 卡上会直接爆显存，参数口径见 [vllm.md](vllm.md) §4.5。
 
 ## 6 后续
 
 | 要做的事 | 走哪个 |
 | --- | --- |
 | 训练 / 推理 | `skills/agent-auto_demo` |
-| 起 vLLM 服务 | `.cursor/server/env_building.md` §1 |
+| 起 vLLM 服务（Qwen / GroundingPI） | [vllm.md](vllm.md) |
+| 权重从哪拉 | [vllm.md](vllm.md) §4 |
+| 服务端口与模型名 | `.cursor/server/services/qwen.md` |
 
 ## 7 参考
 

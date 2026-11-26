@@ -1,8 +1,8 @@
 # 🛰️ 服务
 
-本目录放三样东西：**服务本身**（端口、模型名、请求方式）、**环境搭建**（怎么装起来）、**客户端**（脚本读的配置与调用代码）。
+本目录放两样东西：**服务本身**（端口、模型名、请求方式）、**客户端**（脚本读的配置与调用代码）。
 
-启动脚本不在这里。哪台机器用哪个脚本起、权重放哪个目录，写在工作地图的 `workarea/link.md`。
+装法不在本目录，在仓库根 `buildenv/0-VLM/`。启动脚本也不在这里。哪台机器用哪个脚本起、权重放哪个目录，写在工作地图的 `workarea/link.md`。
 
 - [1 服务](#1-服务)
 - [2 边界](#2-边界)
@@ -25,17 +25,18 @@ GroundingPI 有两个入口：`GroundingPI`（`<HOST>:8082`，优先）和 `Grou
 
 ## 2 边界
 
-一句话：**启动归地图，服务本身归这里。**
+一句话：**服务怎么装归 `buildenv/`，服务本身归这里，启动脚本归地图。**
 
 | 位置 | 写什么 | 不写什么 |
 | --- | --- | --- |
+| `buildenv/0-VLM/vllm.md` | vLLM 装法与版本约束、Qwen / GroundingPI 的权重来源与启动参数 | 端口、在跑状态、启动脚本路径 |
+| `buildenv/0-VLM/triton-sam.md` | Triton 镜像、ONNX 权重、起容器 | 端口、在跑状态、启动脚本路径 |
 | `workarea/link.md` | 主机、目录对应、每个服务的启动脚本绝对路径与权重目录 | 端口、URL、模型名 |
 | `services/*.md` | 端口、模型名、GPU 需求、请求注意点、当前状态 | 启动脚本、权重路径、安装步骤 |
-| `env_building.md` | 装法、依赖版本、镜像、已知坑 | 端口、在跑状态、启动脚本 |
 | `config/*.json` | 程序读的地址，唯一权威 | — |
 | `ledger/runs.md` | 谁何时起了哪个服务、PID、日志、何时停 | 搭建方法、端口定义 |
 
-同一套服务换一台机器：`services/` 一个字都不用改，只改 `link.md` 里的脚本路径；如果端口也变了，改 `config/` 里的地址。
+同一套服务换一台机器：`services/` 一个字都不用改，只改 `link.md` 里的脚本路径；如果端口也变了，改 `config/` 里的地址。装法在两个蓝图里，与机器无关，换机器也不动。
 
 ## 3 探活
 
@@ -55,7 +56,6 @@ py -3 server/util/probe.py --service GroundingPI --skip-sam
 server/
 ├── README.md          # 本文件
 ├── services/          # 一服务一篇：端口、模型名、注意点、现状
-├── env_building.md    # 装法、依赖、镜像、已知坑
 ├── config/            # vllm_server.json、sam.json（地址唯一权威）
 ├── util/              # 客户端与探活
 │   ├── probe.py
@@ -68,10 +68,12 @@ server/
     └── runs.md        # 起停台账
 ```
 
+装法不在本目录，在仓库根 `buildenv/0-VLM/`：`vllm.md`（Qwen / GroundingPI）、`triton-sam.md`（Triton）。
+
 ## 5 加一个服务
 
 1. `services/<name>.md` 写清端口、模型名、GPU 需求、请求注意点。
 2. `config/vllm_server.json` 加一条（vLLM 系）或改 `sam.json`（Triton 系）。
 3. `workarea/link.md` 记这台机器的启动脚本与权重目录。
-4. `env_building.md` 补装法。
+4. 仓库根 `buildenv/0-VLM/` 补一份装法蓝图：vLLM 系并进 `vllm.md`，其它后端另开一份。
 5. 本文件第 1 节加一行。

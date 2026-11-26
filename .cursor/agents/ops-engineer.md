@@ -1,4 +1,4 @@
-﻿---
+---
 name: ops-engineer
 description: >-
   运维工程师。When the team lead delegates project organize, environment
@@ -26,7 +26,7 @@ description: >-
 
   - 项目整理：`REPO/skills/standard-project_merge/SKILL.md`、`REPO/skills/standard-project_agentdemo/SKILL.md`。README 没写清的步骤不编，交回组长。
   - 环境：`REPO/skills/tool-build_env/SKILL.md`。不下载权重。
-  - 盯卡点：`REPO/skills/tool-remote/SKILL.md`。房间脚本 `.cursor/agents/TeamLeader/room.py` 的 `listen` / `watch`。只用派工里的组长 AgentID。`listen` 和 `watch` 只听房间，不看进程、端口、日志。长盯的 `watch` 由组长这条对话挂着。派来核对时看进程和日志；派工写明由你挂监听时，安静周期里不交回。
+  - 盯卡点：`REPO/skills/tool-remote_link/SKILL.md`。房间脚本 `.cursor/agents/TeamLeader/room.py` 的 `listen` / `watch`。只用派工里的组长 AgentID。`listen` 和 `watch` 只听房间，不看进程、端口、日志。长盯的 `watch` 由组长这条对话挂着。派来核对时看进程和日志；派工写明由你挂监听时，安静周期里不交回。
 
 ## 3 做什么
 

@@ -1,6 +1,6 @@
 # Triton SAM
 
-标准 SAM ViT-H（量化 ONNX）的 Triton 远程服务。给分割补边、变化检测报点加 SAM 用。
+标准 SAM ViT-H（量化 ONNX）的 Triton 远程服务。给分割补边、变化检测报点加 SAM、框转多边形用。
 
 | 项 | 值 |
 | --- | --- |
@@ -9,7 +9,19 @@
 | 环境 | 容器 `nvcr.io/nvidia/tritonserver:24.08-py3` |
 | 依赖 skill | `standard-project_merge` |
 
+**不走 vLLM**，和 Qwen / GroundingPI 是两套装法。vLLM 那侧见 [vllm.md](vllm.md)。
+
 服务本身的端口、模型名、请求方式看 `.cursor/server/services/triton-sam.md`。这里只讲怎么从零搭起来。
+
+- [1 拿源码](#1-拿源码)
+- [2 整理项目](#2-整理项目)
+- [3 装环境](#3-装环境)
+- [4 起服务与验证](#4-起服务与验证)
+- [5 已知问题](#5-已知问题)
+- [6 后续](#6-后续)
+- [7 参考](#7-参考)
+
+---
 
 ## 1 拿源码
 
@@ -47,7 +59,8 @@ sam/
 | GPU | NVIDIA，单卡 |
 | Docker | 已装 |
 | NVIDIA Container Toolkit | 已装，`nvidia-container-runtime` 在 `/usr/bin/` |
-| 磁盘 | 镜像解压后约 26GB，Docker Root Dir 建议 ≥40G 空闲 |
+| 镜像 | `nvcr.io/nvidia/tritonserver:24.08-py3`，解压后约 26GB |
+| 磁盘 | 镜像放 Docker Root Dir，**建议 ≥40G 空闲** |
 
 验证能跑 GPU 容器：
 
@@ -61,6 +74,8 @@ docker run --rm --gpus all nvcr.io/nvidia/tritonserver:24.08-py3 nvidia-smi -L
 docker pull nvcr.io/nvidia/tritonserver:24.08-py3
 ```
 
+国内拉不动时先手动拉一遍再起容器，比在脚本里超时好排查。
+
 ### 3.3 下权重
 
 ```bash
@@ -70,10 +85,13 @@ bash 0-download.sh
 
 脚本会从 GitHub release 下两个量化 ONNX（encoder 657MB + decoder 8.7MB），挂 `ghfast.top` 镜像加速，然后拷进 `model_repository/*/1/model.onnx`。
 
+**拷进去的文件名必须是 `model.onnx`**，放在 `model_repository/<模型名>/1/model.onnx`，目录名不要改。
+
 **依赖 `aria2c`**，没装会失败：
 
 ```bash
 sudo apt-get install -y aria2
+command -v aria2c || echo "没装，下载脚本会失败"
 ```
 
 ### 3.4 客户端环境（可选）
@@ -84,7 +102,7 @@ sudo apt-get install -y aria2
 pip install "tritonclient[grpc]" opencv-python numpy
 ```
 
-或用仓内 `.venv`。
+或用仓内 `.venv`。轻量探测只用标准库 TCP，不需要这几位；要做真实的 encode/decode 探测才需要。
 
 ## 4 起服务与验证
 
@@ -99,15 +117,27 @@ docker logs -f sam-triton
 bash 2-probe.sh
 ```
 
-`1-start.sh` 顶部可改的参数：`devices`（GPU id）、`grpc_port`（6621）、`http_port`（8000）、`name`（容器名 `sam-triton`）。
+`1-start.sh` 顶部可改的参数：
+
+| 参数 | 值 |
+| --- | --- |
+| `devices` | GPU id |
+| `grpc_port` | `6621`（容器内 `8001`） |
+| `http_port` | `8000` |
+| `name` | 容器名 `sam-triton` |
+| 启动参数 | `tritonserver --model-repository=/models --strict-model-config=false` |
+| 共享内存 | `--shm-size=1g` |
+| 重启策略 | `--restart unless-stopped` |
+
+`--strict-model-config=false` 让 Triton 从 ONNX 自动推导输入输出，不用手写 config。
 
 日志里出现 READY 才算起来。只看端口开着不算。
 
 ## 5 已知问题
 
-- **`aria2c` 不在默认环境**：`0-download.sh` 用它多源续传，没有就会失败。
-- **启动脚本里 `public_ip` 是硬编码**：换机器不会自动更新，只看它打印的 `127.0.0.1:6621`。
-- **客户端不是 conda `yulin`**：旧文档这么写，实际 `tritonclient` 常在 `7-SAM/sam/.venv`，且那 venv 可能缺 `PIL`。
+- **`aria2c` 不在默认环境**：`0-download.sh` 用它多源续传，单靠 `wget` 在 GitHub 上会慢到按小时算。
+- **启动脚本里 `public_ip` 是硬编码**：换机器不会自动更新（脚本会用 `ifconfig.me` 兜底，但内网机器拿不到）。只看它打印的 `127.0.0.1:6621`，或换机器时顺手改掉。
+- **客户端不在某个 conda 环境里**：旧文档写成 conda 的某个环境名，实测 `tritonclient` 常在 `7-SAM/sam/.venv`（Python 3.14），而且**那个 venv 可能缺 `PIL`**。探测脚本只用 `tritonclient` / `cv2` / `numpy` 能跑，一旦读写图像就会报错，缺就 `pip install pillow`。接手机器时先自己 `command -v` 一遍，别照抄文档里的环境名。
 - **改 GPU 或端口要先删容器**：改 `1-start.sh` 顶部后 `docker rm -f sam-triton` 再起，直接 restart 不生效。
 - **ViT-H 量化仍占几个 GB 显存**：不要和占满同卡的训练叠。
 - **HQ 版暂不提供**。
@@ -123,4 +153,3 @@ bash 2-probe.sh
 ## 7 参考
 
 - 仓内 `README.md`（最详细）
-- 安装坑：`.cursor/server/env_building.md` §2 与 §3.2–3.4

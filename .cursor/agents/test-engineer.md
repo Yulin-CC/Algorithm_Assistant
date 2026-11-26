@@ -46,7 +46,7 @@ description: >-
   - `REPO/skills/agent-auto_demo/SKILL.md`（`_demo_eval` / `_demo_infer`）
   - `REPO/skills/agent-smart_image/SKILL.md`（可视化：`analysis.py --pred`，省略 `--gt`。`wrong` 是误检，变化检测有 `repro/<版本>/draft/miss/` 才计漏检）
   - `REPO/skills/tool-gt_rectify/SKILL.md`（检测框真/假误检、弱标签；旁路）
-  - SSH：`REPO/skills/tool-remote/SKILL.md`。缺 Python 环境按常驻规则「交接」停回组长。派工里的工作区结论（已齐 / 已构建）照单执行；没有这句，或盘上对不上，停回组长，不自己建槽。建槽交回组长派运维。
+  - SSH：`REPO/skills/tool-remote_link/SKILL.md`。缺 Python 环境按常驻规则「交接」停回组长。派工里的工作区结论（已齐 / 已构建）照单执行；没有这句，或盘上对不上，停回组长，不自己建槽。建槽交回组长派运维。
 
 ## 5 禁止
 

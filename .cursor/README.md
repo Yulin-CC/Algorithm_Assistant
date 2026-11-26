@@ -21,7 +21,7 @@
 ├── skills/                       # 何时唤起、怎么确认、怎么探服务
 ├── agents/                       # 工程师 .md；TeamLeader/ 是组长房间，不是新工种
 ├── customer/                     # 某一单：工单 + 进度，不复制引擎
-├── server/                       # 服务：端口、模型名、装法、客户端、台账
+├── server/                       # 服务：端口、模型名、客户端、台账（装法在 buildenv）
 ├── tools/
 │   ├── 0-General/                # 本机手眼：状态、文件、识图
 │   └── 1-DataEngine/             # 产线：整理、分类、检测/分割预标
@@ -33,14 +33,14 @@
 | `skills/` | 路由、闸门、确认话术、台账 | 不写具体转换/推理代码 |
 | `tools/` 叶 | `.skill` + `util/` 真跑脚本 | 不拷进 customer；Qwen 叶不下权重 |
 | `customer/` | 类名、路径、点位、GoldSet、todo | 不复制 classify/detseg 引擎 |
-| `server/` | 服务表 + HTTP/gRPC 客户端 + probe | 不在本仓库起 vLLM/SAM 进程；不写启动脚本路径（那在 `workarea/link.md`） |
+| `server/` | 服务表 + HTTP/gRPC 客户端 + probe | 不在本仓库起 vLLM/SAM 进程；不写启动脚本路径（那在 `workarea/link.md`）；不写装法（那在 `buildenv/`） |
 
 约定：
 
 - 数据根目录必须用户给，禁止猜盘。
 - 预标 / 分类只写 `draft/`、`jsons-det-pre` 等；正式 `jsons/` / `labels/` 要用户另开 **整理** 或合并。
 - 有客户票时进度只写该票 `todo.md`，不要在数据集 `draft/todo-*.md` 再写一份。
-- 未经同意不要动 `Y:\算法样本库\`。
+- 未经同意不要动 `/path/to/PATH`。
 
 ---
 
@@ -55,7 +55,8 @@
 | `agent-source_adapt` | 把上游一个功能切进指定仓库。派工写明仓库、commit、功能名。不整包升级，不开训。日常三槽仍不改上游。 |
 | `agent-smart_image` | 图像理解、掩膜/框三档质量判断、漏检补标和 adjust 调整。叶子 `0-General/0-SmartImage`。不改原标注。 |
 | `tool-build_env` | 给任意叶配 Python：uv 建 venv → 按需 CUDA/torch → 再装 `PKGS`。conda / 裸 pip 仅备选。 |
-| `tool-remote` | 本机 Windows ↔ 远端 Ubuntu。主机以 `workarea/link.md` 已确认行为准。SSH、上传核对。 |
+| `tool-remote_link` | 本机 Windows ↔ 远端 Ubuntu。主机以 `workarea/link.md` 已确认行为准。SSH、上传核对。 |
+| `standard-git_repo` | git 仓库规范。建仓库 / `git init` / 上版本控制走分类、`.gitignore` 三分法、首次基线；提交远程 / push / 同步 GitLab 走凭据校验、脱敏、推送。含密钥红线与回滚。 |
 | `standard-*` | README / 脚本 / skill 写法、数据集合并等规范。给 git 克隆看的项目首页只用 `standard-create_readme_git`，平时 README 仍用 `standard-create_readme`。 |
 
 图像理解、掩膜/框质量判断、漏检补标和 adjust 调整走 `agent-smart_image` → `tools/0-General/0-SmartImage`（不走 DataEngine）。不改原标注。
@@ -88,11 +89,11 @@
 | `util/run.py` | 在允许路径内跑 `.py` / `.sh`，超时并截断输出 |
 | `util/paths.py` | **路径白名单**（不是容器沙箱） |
 
-默认允许根：家目录、临时目录、已存在的 `D:/0-data` `D:/1-project` `D:/4-docs` `/path/to/home` `/path/to/home` `/tmp`。再加 `LOCALMACHINE_ROOTS`。
+默认允许根：家目录、临时目录、已存在的 `/path/to/data` `/path/to/home/1-project` `/path/to/docs` `/path/to/home` `/path/to/home` `/tmp`。再加 `LOCALMACHINE_ROOTS`。
 
 ```bash
 python tools/0-General/1-LocalMachine/util/system.py gpu
-python tools/0-General/1-LocalMachine/util/files.py ls "D:/0-data"
+python tools/0-General/1-LocalMachine/util/files.py ls "/path/to/data"
 ```
 
 ---
@@ -177,13 +178,14 @@ customer/<票>/
 
 ## 6 服务（`server/`）
 
-叶子连**已经在跑**的服务，不在本仓库起服务。服务本身（端口、模型名、装法）在 `server/`，启动脚本在哪台机器上、叫什么，在 `workarea/link.md`。
+叶子连**已经在跑**的服务，不在本仓库起服务。服务本身（端口、模型名）与装法分别在 `server/` 和仓库根 `buildenv/0-VLM/`，启动脚本在哪台机器上、叫什么，在 `workarea/link.md`。
 
 | 路径 | 功能 |
 | --- | --- |
 | `server/README.md` | 服务总表与边界说明 |
 | `server/services/*.md` | 一服务一篇：端口、模型名、请求注意点 |
-| `server/env_building.md` | 装法、依赖、镜像、已知坑 |
+| `buildenv/0-VLM/vllm.md` | vLLM 装法、版本约束、Qwen / GroundingPI 权重来源与启动参数 |
+| `buildenv/0-VLM/triton-sam.md` | Triton 镜像、ONNX 权重、起容器 |
 | `server/config/vllm_server.json` | 多路 vLLM。地址和模型名以这个文件为准。`default: true` 是分类和识图用的 Qwen。GroundingPI 不是默认。FP8 不是默认 |
 | `server/config/sam.json` | Triton SAM。地址以这个文件的 `url` 为准。另一台容器不作为默认 |
 | `server/util/vllm_client.py` / `groundingpi_client.py` / `sam_client.py` | OpenAI 兼容 chat、GroundingPI、SAM gRPC |

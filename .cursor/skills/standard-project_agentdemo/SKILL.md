@@ -19,6 +19,10 @@ description: >-
 
   - **触发**：建立 Agent-demo、补三槽、写算法仓 `0-Agent-demo/SKILL.md`，或 `standard-project_merge` 做到 QuickStart 之后。用户说「整理一下项目」「合并项目」「整理项目结构」时，合并技能必须先来读本技能。
   - **不在这里**：开训、验证、推理走 `skills/agent-auto_demo/SKILL.md`。YOLOE 开集的数据文件名走该技能 [§3.1]，不在本技能展开。工作区指导的写法在 [§5]。
+  - **前置：先确认仓库有 git 基线**。建槽要往仓里写 `0-Agent-demo/`、`config/`、`data/`，没有基线这些改动不可回滚。动手前先按 `skills/standard-git_repo/SKILL.md` §0 核一遍：`git rev-parse --is-inside-work-tree` 返回 `true`，且 `git log --oneline` 至少一条。
+    - 没有基线：先按该技能 §1 → §3 建基线，再回来建槽。
+    - 有仓但 `0-Agent-demo/` 已被跟踪：先按 §1.1 把它写进 `.gitignore` 再动手，不要接着往里写文件。
+    - 仓在服务器上、本机够不着：把这一条写进该票 `todo.md` 交回组长，不跳过。
   - **原则**：三个槽都建，即使本仓库暂时只有推理。本步只建票、写文件、映射入口。
 
 ---
@@ -139,3 +143,4 @@ description: >-
   - [ ] `todo.entry` 与 QuickStart 映射一致；没有的入口标 `skipped`
   - [ ] `devices` 为空时包装脚本会退出；未改仓库 `config/`、`data/`、`0-QuickStart/`
   - [ ] README 已写清的部分已写入 `0-Agent-demo/SKILL.md`。没核实的步骤没有写成固定指导；整份都不明确时，文件先不建
+  - [ ] 动手前已确认仓库有 git 基线（`git log --oneline` 非空），`0-Agent-demo/` 在 `.gitignore` 里；本轮新增文件可回滚

@@ -23,7 +23,7 @@ description: >-
   - `REPO/skills/agent-pyramidlabel/SKILL.md`
   - `REPO/skills/agent-smart_image/SKILL.md`
   - `REPO/skills/tool-annotation/SKILL.md`
-  - 闸门 / SSH：`standard-leaf_run`、`tool-remote`。缺 Python 环境停回组长，按常驻规则「交接」办。
+  - 闸门 / SSH：`standard-leaf_run`、`tool-remote_link`。缺 Python 环境停回组长，按常驻规则「交接」办。
 
 ## 3 禁止
 
@@ -39,3 +39,21 @@ description: >-
   - 交回组长：产物路径（`draft/`、`jsons-det-pre`、`jsons-seg-pre`、sample 叠图等）、类名、是否已人审、blocked、建议的下一棒工种。坏图坏标签按常驻规则「交接」处理。
   - 下一棒若是算法仓训练：不要自己开训，把数据根和划分写进 todo 交给组长派 `train-engineer`。
   - 缺环境或杂活：写入 todo 的 blocked，交回组长。组长派运维装好后再派回。
+
+## 5 操作口径
+
+### 5.1 按目标挖负样本：中心偏移要问
+
+  - **场景**：为某个具体目标（车辆、船只、杆塔等）挖负样本，要把目标裁成固定尺寸的窗。
+  - **默认**：以目标为中心裁。这个口径下目标永远在窗正中，而真实场景里目标不一定居中。
+  - **开跑前问一句**：派工里没写、票上也没写时，向组长报一句「要不要加随机中心偏移量、多出一批窗」，等答复再跑。**不擅自加，也不擅自不加。**
+  - **加了怎么算**：偏移量按「目标框完整留在窗内、四周至少留 32 px」自动取下限，再在范围内随机；A/B 两期必须用同一个偏移量，否则成对关系失效；偏移版本在文件名加 `_o` 后缀、`crop_map.csv` 记 `offset` / `off_x` / `off_y`，便于事后筛。
+  - **不要放大倍数**：偏移批次彼此高度相关（同一目标、同一背景），对多样性贡献有限。建议每窗 1 批，超过 2 批收益明显递减。
+  - **例外**：用户这轮已经明确说了加或不加，照用户的来。
+
+### 5.2 已就绪的带偏移裁图脚本
+
+  - `/path/to/home/1-project/3-TASK/SAM-CD/1-data-process/utils/1-cardetsample-crop1024.py`（<HOST>）
+  - 默认 `--offset 0` 关闭；要用时 `--offset 1 --offset-max 300 --offset-margin 32 --seed 0`
+  - 本机副本 `tmp/1-cardetsample-crop1024.py`
+
